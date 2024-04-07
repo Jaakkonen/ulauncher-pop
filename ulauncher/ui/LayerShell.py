@@ -6,7 +6,7 @@ Uses the wlr-layer-shell protocol [1]
 
 [1]: https://gitlab.freedesktop.org/wlroots/wlr-protocols/-/blob/master/unstable/wlr-layer-shell-unstable-v1.xml
 """
-from typing import TypeGuard
+from typing import Optional, TypeGuard
 
 import gi
 from gi.repository import Gtk
@@ -19,7 +19,7 @@ except (ValueError, ImportError):
 
 
 _is_supported = GtkLayerShell is not None and GtkLayerShell.is_supported()
-def is_supported(v: "GtkLayerShell" | None = GtkLayerShell) -> TypeGuard["GtkLayerShell"]:
+def is_supported(v: Optional[GtkLayerShell] = GtkLayerShell) -> TypeGuard[GtkLayerShell]:
     """Check if running under a wayland compositor that supports the layer shell extension"""
     return _is_supported
 
