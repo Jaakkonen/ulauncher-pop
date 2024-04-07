@@ -118,5 +118,3 @@ class PopLauncherProvider:
       Triggered when user presses enter.
       """
       self.glib_impl.send_request(PopRequest.Activate(id))
-
- .
