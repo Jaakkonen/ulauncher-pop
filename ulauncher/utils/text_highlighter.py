@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Generator
+from collections.abc import Generator
 
 from ulauncher.utils.fuzzy_search import get_matching_blocks
 

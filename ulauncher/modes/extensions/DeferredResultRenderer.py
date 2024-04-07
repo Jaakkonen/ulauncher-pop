@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from functools import lru_cache, partial
+from functools import cache, partial
+from typing import Literal
 
 from gi.repository import Gio, GLib
 
@@ -19,7 +20,7 @@ class DeferredResultRenderer:
     LOADING_DELAY = 0.3  # delay in sec before Loading... is rendered
 
     @classmethod
-    @lru_cache(maxsize=None)
+    @cache
     def get_instance(cls) -> DeferredResultRenderer:
         """
         Returns singleton instance

@@ -60,7 +60,7 @@ class ItemNavigation:
         next_result = (self.index or 0) + 1
         self.select(next_result if next_result < len(self.result_widgets) else 0)
 
-    def activate(self, query: Query, alt: bool = False) -> Any:
+    def activate(self, query: Query, alt: bool = False) -> bool:
         """
         Return boolean - True if Ulauncher window should be kept open
         """

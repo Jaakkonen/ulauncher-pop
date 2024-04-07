@@ -5,12 +5,13 @@ import logging
 import os
 import pickle
 import sys
+from collections.abc import Callable
 from configparser import ConfigParser
 from functools import partial
 from pathlib import Path
 from shutil import rmtree
 from types import ModuleType
-from typing import Any, Callable
+from typing import Any
 
 from ulauncher.config import FIRST_V6_RUN, PATHS
 from ulauncher.modes.extensions.ExtensionController import ExtensionController

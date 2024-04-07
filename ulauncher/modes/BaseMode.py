@@ -1,3 +1,10 @@
+from collections.abc import Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ulauncher.modes.apps.AppResult import AppResult
+
+
 class BaseMode:
     def is_enabled(self, _query):
         """
@@ -5,7 +12,7 @@ class BaseMode:
         """
         return False
 
-    def on_query_change(self, _query):
+    def on_query_change(self, _query) -> None:
         """
         Triggered when user changes a search query
         """
@@ -21,7 +28,7 @@ class BaseMode:
         """
         return []
 
-    def get_triggers(self):
+    def get_triggers(self) -> Iterable["AppResult"]:
         """
         Returns an iterable of searchable results
         """

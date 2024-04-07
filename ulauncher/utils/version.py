@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from typing import Optional, Tuple
-
 # Ulauncher API version compatibility checking, featuring a subset of the "semver" standard, without the patch version.
 # For backward compatibility with Ulauncher 5, the constraints are fully valid semver constraints.
 # Hyphen-ranges are supported, as well as the "x" wildcard syntax (x must be lowercase)
 # Tilde and Caret are permitted, but ignored. Unlike semver the constraint "2.0" matches version 2.0 or newer
 # There is no support for "*", "||", comparison operators like ">=", "!=", or the pre-release annotation
 
-Version = Tuple[int, Optional[int]]
+Version = tuple[int, int | None]
 
 
 def get_version(version_string: str) -> Version:

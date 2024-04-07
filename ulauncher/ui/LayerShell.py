@@ -6,6 +6,7 @@ Uses the wlr-layer-shell protocol [1]
 
 [1]: https://gitlab.freedesktop.org/wlroots/wlr-protocols/-/blob/master/unstable/wlr-layer-shell-unstable-v1.xml
 """
+from typing import TypeGuard
 
 import gi
 from gi.repository import Gtk
@@ -17,13 +18,14 @@ except (ValueError, ImportError):
     GtkLayerShell = None
 
 
-def is_supported() -> bool:
+_is_supported = GtkLayerShell is not None and GtkLayerShell.is_supported()
+def is_supported(v: "GtkLayerShell" | None = GtkLayerShell) -> TypeGuard["GtkLayerShell"]:
     """Check if running under a wayland compositor that supports the layer shell extension"""
-    return GtkLayerShell is not None and GtkLayerShell.is_supported()
+    return _is_supported
 
 
 def enable(window: Gtk.Window) -> bool:
-    if not is_supported():
+    if not is_supported(GtkLayerShell):
         return False
 
     GtkLayerShell.init_for_window(window)
@@ -35,6 +37,8 @@ def enable(window: Gtk.Window) -> bool:
 
 
 def set_vertical_position(window: Gtk.Window, pos_y: float) -> None:
+    if not is_supported(GtkLayerShell):
+        return
     # Set vertical position and anchor to the top edge, will be centered horizontally
     # by default
     GtkLayerShell.set_anchor(window, GtkLayerShell.Edge.TOP, True)

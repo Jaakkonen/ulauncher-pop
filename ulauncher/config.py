@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
-from functools import lru_cache
+from functools import cache
 from gettext import gettext
 
 import ulauncher
@@ -24,7 +24,7 @@ os.makedirs(PATHS.EXTENSIONS_CONFIG, exist_ok=True)
 os.makedirs(PATHS.USER_THEMES, exist_ok=True)
 
 
-@lru_cache(maxsize=None)
+@cache
 def get_options():
     """Command Line options for the initial ulauncher (daemon) call"""
     # Python's argparse is very similar to Gtk.Application.add_main_option_entries,

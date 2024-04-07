@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from functools import lru_cache
+from functools import cache
 
 from gi.repository import Gio, Gtk
 
@@ -33,7 +33,7 @@ class UlauncherApp(Gtk.Application):
     _appindicator: AppIndicator | None = None
 
     @classmethod
-    @lru_cache(maxsize=None)
+    @cache
     def get_instance(cls):
         return cls()
 

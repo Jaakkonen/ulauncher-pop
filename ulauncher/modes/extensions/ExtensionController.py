@@ -3,10 +3,11 @@ from __future__ import annotations
 import json
 import logging
 import sys
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from shutil import rmtree
-from typing import Any, Generator
+from typing import Any
 from weakref import WeakValueDictionary
 
 from ulauncher.config import PATHS, get_options

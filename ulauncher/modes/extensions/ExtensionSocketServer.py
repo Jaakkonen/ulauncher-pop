@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import os.path
-from functools import lru_cache
+from functools import cache
 
 from gi.repository import Gio, GObject
 
@@ -20,7 +20,7 @@ class ExtensionSocketServer:
     controllers: dict[str, ExtensionSocketController]
 
     @classmethod
-    @lru_cache(maxsize=None)
+    @cache
     def get_instance(cls):
         return cls()
 

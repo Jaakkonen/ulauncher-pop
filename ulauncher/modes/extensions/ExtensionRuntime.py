@@ -5,8 +5,8 @@ import logging
 import signal
 import sys
 from collections import deque
+from collections.abc import Callable
 from time import time
-from typing import Callable
 
 if sys.version_info >= (3, 8):
     from typing import Literal

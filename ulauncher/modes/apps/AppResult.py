@@ -53,7 +53,7 @@ class AppResult(Result):
         return [*map(operator.itemgetter(0), sorted_tuples)]
 
     @staticmethod
-    def get_most_frequent(limit=5):
+    def get_most_frequent(limit=5) -> list["AppResult"]:
         """
         Returns most frequent apps
 

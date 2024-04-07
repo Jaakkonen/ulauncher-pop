@@ -6,8 +6,9 @@ import mimetypes
 import os
 import time
 import traceback
-from functools import lru_cache
-from typing import Any, Callable, Generator
+from collections.abc import Callable, Generator
+from functools import cache
+from typing import Any
 from urllib.parse import unquote, urlparse
 
 from gi.repository import Gio, GLib, Gtk
@@ -70,7 +71,7 @@ class PreferencesServer:
     client: WebKit2.WebView
 
     @classmethod
-    @lru_cache(maxsize=None)
+    @cache
     def get_instance(cls):
         return cls()
 

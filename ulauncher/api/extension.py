@@ -7,7 +7,8 @@ import os
 import sys
 import threading
 from collections import defaultdict
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 from ulauncher.api.client.Client import Client
 from ulauncher.api.client.EventListener import EventListener
