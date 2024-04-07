@@ -8,10 +8,12 @@ from gi.repository import Gdk, Gtk
 
 from ulauncher.api.result import Result
 from ulauncher.config import PATHS
-from ulauncher.modes.apps.AppResult import AppResult
+from ulauncher.modes.apps import AppResult
+from ulauncher.modes.apps.launch_app import launch_app
 from ulauncher.modes.extensions.DeferredResultRenderer import DeferredResultRenderer
 from ulauncher.modes.extensions.ExtensionSocketServer import ExtensionSocketServer
-from ulauncher.modes.ModeHandler import ModeHandler
+from ulauncher.modes.PopLauncher import PopLauncherProvider
+from ulauncher.modes.poplauncher.poplauncher_ipc import PopResponse, TPopResponse
 from ulauncher.modes.shortcuts.run_script import run_script
 from ulauncher.ui import LayerShell
 from ulauncher.ui.ItemNavigation import ItemNavigation
@@ -25,52 +27,7 @@ from ulauncher.utils.wm import get_monitor
 logger = logging.getLogger()
 
 
-def handle_event(window: UlauncherWindow, event: bool | list | str | dict[str, Any]) -> bool:  # noqa: PLR0912
-    if isinstance(event, bool):
-        return event
-    if isinstance(event, list):
-        window.show_results([res if isinstance(res, Result) else Result(**res) for res in event])
-        return True
-    if isinstance(event, str):
-        window.app.query = event
-        return True
 
-    event_type = event.get("type", "")
-    data = event.get("data")
-    ext_id = event.get("ext_id")
-    controller = None
-    if event_type == "action:open" and data:
-        open_detached(data)
-    elif event_type == "action:clipboard_store" and data:
-        clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        clipboard.set_text(data, -1)
-        clipboard.store()
-        window.hide_and_clear_input()
-        copy_hook = Settings.load().copy_hook
-        if copy_hook:
-            logger.info("Running copy hook: %s", copy_hook)
-            subprocess.Popen(["sh", "-c", copy_hook])
-
-    elif event_type == "action:legacy_run_script" and isinstance(data, list):
-        run_script(*data)
-    elif event_type == "action:legacy_run_many" and isinstance(data, list):
-        keep_open = False
-        for action in data:
-            if handle_event(window, action):
-                keep_open = True
-        return keep_open
-    elif event_type == "event:activate_custom":
-        controller = DeferredResultRenderer.get_instance().get_active_controller()
-    elif event_type.startswith("event") and ext_id:
-        controller = ExtensionSocketServer.get_instance().get_controller_by_id(ext_id)
-    else:
-        logger.warning("Invalid result from mode: %s", type(event).__name__)
-
-    if controller:
-        controller.trigger_event(event)
-        return event.get("keep_app_open", False) if event_type == "event:activate_custom" else True
-
-    return False
 
 
 class UlauncherWindow(Gtk.ApplicationWindow):
@@ -79,6 +36,52 @@ class UlauncherWindow(Gtk.ApplicationWindow):
     is_dragging = False
     layer_shell_enabled = False
     settings = Settings.load()
+    _result_provider: PopLauncherProvider # ResultProvider
+
+    def handle_event(self: UlauncherWindow, event: bool | list | str | dict[str, Any] | TPopResponse) -> None:  # noqa: PLR0912
+        """
+        Handles event from mode or extension.
+
+        bool -> if False, hide window
+        list -> list of Result instances. Keeps window open
+        str -> set query text. Keeps window open
+
+        dict -> custom events.
+            type="action:open" -> opens file with xdg-open. Closes window
+            type="action:clipboard_store" -> stores data in clipboard. Closes window 2 times :D
+            type="action:legacy_run_script" -> runs script. Closes window
+            type="action:legacy_run_many" -> runs multiple actions. Keeps window open if any action returns True
+            type="event:activate_custom" -> activates custom controller. Keeps window open if keep_app_open is True
+            type="event:..." -> activates extension controller. Keeps window open if keep_app_open is True
+        """
+        match event:
+            case PopResponse.Close():
+                self.hide_and_clear_input()
+            case PopResponse.Context(id=id, options=options):
+                raise NotImplementedError("Context options are not implemented")
+            case PopResponse.DesktopEntry(path, gpu_preference, action_name):
+                # Launch the .desktop file
+                launch_app(path.rsplit('/',1)[1])
+            case PopResponse.Update(l):
+                def make_on_enter(id):
+                    def on_enter(query):
+                        self._result_provider.on_enter(id)
+                    return on_enter
+                res = [
+                    Result(
+                        name=r['name'],
+                        description=r['description'],
+                        icon=r.get('icon', {}).get('Name', ''),
+                        on_enter=make_on_enter(r['id'])
+                    )
+                    for r in l
+                ]
+                self.show_results(res)
+            case PopResponse.Fill(txt):
+                # Replace the current query with the given text
+                self.app.query = txt
+            case _ as x:
+                raise ValueError(f"Invalid result from mode: {type(event).__name__}")
 
     def __init__(self, **kwargs):
         super().__init__(
@@ -94,6 +97,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             window_position=Gtk.WindowPosition.CENTER,
             **kwargs,
         )
+        self._result_provider = PopLauncherProvider(self.handle_event)
 
         if LayerShell.is_supported():
             self.layer_shell_enabled = LayerShell.enable(self)
@@ -171,6 +175,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
 
         # this will trigger to show frequent apps if necessary
         self.show_results([])
+        assert self.app is not None
 
     ######################################
     # GTK Signal Handlers
@@ -195,7 +200,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
         self.app._query = self.input.get_text().lstrip()  # noqa: SLF001
         if self.is_visible():
             # input_changed can trigger when hiding window
-            self.handle_event(ModeHandler.get_instance().on_query_change(self.app.query))
+            self._result_provider.on_query_change(self.app.query)
 
     def on_input_key_press(self, entry_widget: Gtk.Entry, event: Gdk.EventKey) -> bool:  # noqa: PLR0911, PLR0912
         """
@@ -219,21 +224,6 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             self.hide()
             return True
 
-        if ctrl and keyname == "comma":
-            self.app.show_preferences()
-            return True
-
-        if (
-            keyname == "BackSpace"
-            and not ctrl
-            and not entry_widget.get_selection_bounds()
-            and entry_widget.get_position() == len(self.app.query)
-        ):
-            new_query = ModeHandler.get_instance().on_query_backspace(self.app.query)
-            if new_query is not None:
-                self.app.query = new_query
-                return True
-
         if self.results_nav:
             if keyname in ("Up", "ISO_Left_Tab") or (ctrl and keyname == up_alias):
                 self.results_nav.go_up()
@@ -253,7 +243,8 @@ class UlauncherWindow(Gtk.ApplicationWindow):
 
             if keyname in ("Return", "KP_Enter"):
                 result = self.results_nav.activate(self.app.query, alt=alt)
-                self.handle_event(result)
+                if result is False:
+                    self.hide_and_clear_input()
                 return True
             if alt and event.string in jump_keys:
                 self.select_result(jump_keys.index(event.string))
@@ -278,14 +269,6 @@ class UlauncherWindow(Gtk.ApplicationWindow):
     @property
     def app(self):
         return self.get_application()
-
-    def handle_event(self, event: bool | list | str | dict[str, Any] | None) -> None:
-        if event is None:
-            self.hide_and_clear_input()
-            return
-
-        if not handle_event(self, event):
-            self.hide_and_clear_input()
 
     def apply_css(self, widget: Gtk.Widget) -> None:
         assert self._css_provider
@@ -377,6 +360,9 @@ class UlauncherWindow(Gtk.ApplicationWindow):
         self.input.set_text("")
         self.hide()
 
+    def get_default_results(self) -> list[Result]:
+        return [] #AppResult.get_most_frequent(self.settings.max_recent_apps)
+
     def show_results(self, results: list[Result]) -> None:
         """
         :param list results: list of Result instances
@@ -386,7 +372,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
 
         limit = len(self.settings.get_jump_keys()) or 25
         if not self.input.get_text() and self.settings.max_recent_apps:
-            results = AppResult.get_most_frequent(self.settings.max_recent_apps)
+            results = []
 
         if results:
             result_widgets: list[ResultWidget] = []
