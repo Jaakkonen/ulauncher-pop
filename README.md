@@ -1,3 +1,10 @@
+# THIS IS AN EXPERIMENTAL FORK
+Please use the proper [Ulauncher](https://github.com/Ulauncher/Ulauncher) if you want a stable experience. This fork aims at integrating Ulauncher to [pop-launcher](https://github.com/pop-os/launcher)
+in order to have more portable extension ecosystem.
+
+
+# Ulauncher
+
 [![Made in Ukraine](https://img.shields.io/badge/made_in-ukraine-ffd700.svg?labelColor=0057b7)](https://stand-with-ukraine.pp.ua)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![Test Status](https://github.com/Ulauncher/Ulauncher/actions/workflows/tests.yml/badge.svg?branch=v6)
