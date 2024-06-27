@@ -10,12 +10,10 @@ from ulauncher.config import APP_ID
 from ulauncher.ui.windows.HotkeyDialog import HotkeyDialog
 from ulauncher.utils.environment import DESKTOP_NAME
 from ulauncher.utils.launch_detached import launch_detached
-from ulauncher.utils.systemd_controller import SystemdController
 
 logger = logging.getLogger()
 launch_command = f"gapplication launch {APP_ID}"
-plasma_service_controller = SystemdController("plasma-kglobalaccel")
-IS_PLASMA = bool(which("kwriteconfig5") and which("systemsettings5") and plasma_service_controller.is_active())
+IS_PLASMA = False
 IS_SUPPORTED = "GNOME" in DESKTOP_NAME or DESKTOP_NAME in ("XFCE", "PANTHEON")
 
 
@@ -98,7 +96,7 @@ class HotkeyController:
             logger.debug("Executing kwriteconfig5 commands to add Plasma global shortcut for '%s'", hotkey)
             subprocess.run(["kwriteconfig5", *config_path, "_k_friendly_name", "Ulauncher"], check=True)
             subprocess.run(["kwriteconfig5", *config_path, "_launch", f"{hotkey},none,Ulauncher"], check=True)
-            plasma_service_controller.restart()
+            raise SystemExit("Please restart Ulauncher to apply the changes")
             return True
         if IS_SUPPORTED:
             _set_hotkey(default_hotkey)

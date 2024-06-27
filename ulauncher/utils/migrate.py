@@ -16,7 +16,6 @@ from typing import Any
 from ulauncher.config import FIRST_V6_RUN, PATHS
 from ulauncher.modes.extensions.ExtensionController import ExtensionController
 from ulauncher.utils.json_utils import json_load
-from ulauncher.utils.systemd_controller import SystemdController
 
 _logger = logging.getLogger()
 CACHE_PATH = os.path.join(os.environ.get("XDG_CACHE_HOME", f"{PATHS.HOME}/.cache"), "ulauncher_cache")  # See issue#40
@@ -117,18 +116,7 @@ def v5_to_v6() -> None:
             controller.state.save()
 
     # Migrate autostart conf from XDG autostart file to systemd
-    if FIRST_V6_RUN:
-        try:
-            systemd_unit = SystemdController("ulauncher")
-            AUTOSTART_FILE = Path(f"{PATHS.CONFIG}/../autostart/ulauncher.desktop").resolve()
-            if os.path.exists(AUTOSTART_FILE) and systemd_unit.can_start():
-                autostart_config = ConfigParser()
-                autostart_config.read(AUTOSTART_FILE)
-                if autostart_config["Desktop Entry"]["X-GNOME-Autostart-enabled"] == "true":
-                    systemd_unit.toggle(True)
-            _logger.info("Applied autostart settings to systemd")
-        except Exception as e:
-            _logger.warning("Couldn't migrate autostart: %s", e)
+    # NOTE: Autostart should be configured from the DE, not handled by Ulauncher
 
 
 def v5_to_v6_destructive() -> None:

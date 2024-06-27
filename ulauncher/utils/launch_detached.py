@@ -4,8 +4,6 @@ import sys
 
 from gi.repository import GLib
 
-from ulauncher.utils.systemd_controller import SystemdController
-
 logger = logging.getLogger()
 
 
@@ -36,11 +34,12 @@ def detach_child():
         fp.close()
         os.dup2(null_fd, orig_fd)
 
-
+USE_SYSTEMD_RUN = False
 def launch_detached(cmd):
-    use_systemd_run = SystemdController("ulauncher").is_active()
-    if use_systemd_run:
+
+    if USE_SYSTEMD_RUN:
         cmd = ["systemd-run", "--user", "--scope", *cmd]
+
 
     env = dict(os.environ.items())
     # Make sure GDK apps aren't forced to use x11 on wayland due to ulauncher's need to run
@@ -50,11 +49,12 @@ def launch_detached(cmd):
 
     try:
         envp = [f"{k}={v}" for k, v in env.items()]
+        logger.debug("Launching detached: %s", cmd)
         GLib.spawn_async(
             argv=cmd,
             envp=envp,
             flags=GLib.SpawnFlags.SEARCH_PATH_FROM_ENVP | GLib.SpawnFlags.SEARCH_PATH,
-            child_setup=None if use_systemd_run else detach_child,
+            child_setup=None if USE_SYSTEMD_RUN else detach_child,
         )
     except Exception:
         logger.exception('Could not launch "%s"', cmd)

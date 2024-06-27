@@ -23,7 +23,6 @@ from ulauncher.utils.environment import IS_X11
 from ulauncher.utils.hotkey_controller import HotkeyController
 from ulauncher.utils.launch_detached import open_detached
 from ulauncher.utils.Settings import Settings
-from ulauncher.utils.systemd_controller import SystemdController
 from ulauncher.utils.Theme import get_themes
 from ulauncher.utils.WebKit2 import WebKit2
 
@@ -76,7 +75,7 @@ class PreferencesServer:
         return cls()
 
     def __init__(self):
-        self.autostart_pref = SystemdController("ulauncher")
+        self.autostart_pref = False
         self.settings = Settings.load()
         self.context = WebKit2.WebContext()
         self.context.register_uri_scheme("prefs", self.request_listener)
@@ -146,9 +145,10 @@ class PreferencesServer:
         logger.info("API call /get/all")
         export_settings = self.settings.copy()
         export_settings["available_themes"] = [{"value": name, "text": name} for name in get_themes()]
-        export_settings["autostart_enabled"] = self.autostart_pref.is_enabled()
+        # export_settings["autostart_enabled"] = self.autostart_pref.is_enabled()
+        export_settings["autostart_enabled"] = False
         export_settings["env"] = {
-            "autostart_allowed": self.autostart_pref.can_start(),
+            "autostart_allowed": False,
             "api_version": API_VERSION,
             "hotkey_supported": HotkeyController.is_supported(),
             "version": VERSION,
@@ -175,12 +175,12 @@ class PreferencesServer:
 
     def apply_autostart(self, is_enabled):
         logger.info("Set autostart_enabled to %s", is_enabled)
-        if is_enabled and not self.autostart_pref.can_start():
+        if is_enabled: # and not self.autostart_pref.can_start():
             msg = "Unable to turn on autostart preference"
             raise RuntimeError(msg)
 
         try:
-            self.autostart_pref.toggle(is_enabled)
+            raise NotImplementedError("Configure autostart via systemd, not the preferences")
         except Exception as err:
             msg = f'Caught an error while switching "autostart": {err}'
             raise RuntimeError(msg) from err
