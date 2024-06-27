@@ -1,17 +1,14 @@
-[build-system]
-requires = ["setuptools", "setuptools-scm"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "ulauncher"
 description = "Application launcher for Linux"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.11"
 license = {text = "GPL-3"}
 authors = [
   {name = "Aleksandr Gornostal"},
   {name = "Albin Larsson"},
   {name = "Troy Curtis"},
+  {name = "Jaakko Sirén" }
 ]
 urls.Homepage = "http://ulauncher.io/"
 urls.Documentation = "https://docs.ulauncher.io/"
@@ -27,11 +24,11 @@ version = {attr = "ulauncher.version"}
 [tool.black]
 line-length = 120
 
-[tool.mypy]
-python_version = "3.7"
-check_untyped_defs = true
-disallow_incomplete_defs = true
-disable_error_code = "import-untyped"
+# [tool.mypy]
+# python_version = "3.7"
+# check_untyped_defs = true
+# disallow_incomplete_defs = true
+# disable_error_code = "import-untyped"
 
 [tool.pylint.MASTER]
 ignore-patterns="ulauncher,docs,data,scripts,tests"
@@ -50,7 +47,7 @@ extend-exclude = ["preferences-src/static"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py37" # py37 is the lowest supported option
+target-version = "py311"
 lint.ignore = [
   "A003",     # Allow using same names as python internals for class methods that doesn't shadow global scope
   "RUF012",   # Mostly false positives because we're deep cloning class vars when creating instances in our custom data class
@@ -96,6 +93,9 @@ lint.select = [
   "W",        # pycodestyle warnings
   "Q",        # flake8-quotes
 ]
+extend-select = [
+  "I",       # isort
+]
 
 # Relax some linting rules for tests
 [tool.ruff.lint.per-file-ignores]
@@ -117,3 +117,35 @@ builtins-ignorelist = ["id"]
 [tool.pytest.ini_options]
 log_cli = true
 
+[tool.pdm]
+# Install Ulauncher as a editable dependency in __pypackages__ or venv
+# -> Allows importing Ulauncher as a module in the same Python environment without "src." prefix
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "setuptools",
+    "pygobject-stubs",
+    "black",
+    "mypy",
+    "pytest",
+  "pytest-asyncio",
+    "pytest-mock",
+    "PyGObject-stubs",
+    "ruff",
+    "typos",
+    "build",
+]
+
+[tool.pdm.scripts]
+start = {call="ulauncher.main:main", env={ ULAUNCHER_SYSTEM_DATA_DIR="./data", ULAUNCHER_APP_ID="io.ulauncher.Ulauncher.dev" }}
+
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pyright]
+# gi.repository is a dynamically populated namespace where only stubs are available
+# TODO: Add a proxy module to allow importing gi.repository which checks the runtime availability of the modules.
+reportMissingModuleSource = "information"
