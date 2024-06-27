@@ -45,7 +45,12 @@ class JsonProtocol:
 
     @classmethod
     def from_json(cls, data: str) -> "Msg":
-        obj = json.loads(data)
+        try:
+            obj = json.loads(data)
+        except json.JSONDecodeError as e:
+            err = f"Error decoding JSON: {e}"
+            e.add_note(f"Data: {data}")
+            raise ValueError(err) from e
         classname = None
         args = []
         kwargs = {}
