@@ -8,7 +8,7 @@ from gettext import gettext
 import ulauncher
 from ulauncher import paths as PATHS
 
-APP_ID = "io.ulauncher.Ulauncher"
+APP_ID = os.getenv("ULAUNCHER_APP_ID", "io.ulauncher.Ulauncher")
 API_VERSION = "3.0"
 VERSION = ulauncher.version
 FIRST_RUN = not os.path.exists(PATHS.CONFIG)  # If there is no config dir, assume it's the first run
