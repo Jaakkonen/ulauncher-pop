@@ -114,7 +114,8 @@ class UlauncherWindow(Gtk.ApplicationWindow):
         self.input = Gtk.Entry(
             height_request=30,
             width_request=int(520.0 * text_scaling_factor),
-            margin_top=15,
+            margin_top=10,
+            margin_bottom=10,
             margin_start=20,
             margin_end=20,
             activates_default=False,
@@ -314,17 +315,10 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             geo = monitor.get_geometry()
             max_height = geo.height - (geo.height * 0.15) - 100  # 100 is roughly the height of the text input
 
-            #window_width = self.settings.base_width
             window_width = int(350.0 * text_scaling_factor)
             pos_x = int(geo.width * 0.5 - window_width * 0.5 + geo.x)
             pos_y = int(geo.y + geo.height * 0.12)
 
-            # breakpoint()
-            self.set_size_request(600, -1)
-            # self.set_geometry_hints(
-            #     min_width=window_width,
-
-            # )
 
 
             # self.set_size_request(window_width, -1)
@@ -399,13 +393,10 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             self.results_nav.select_default(self.app.query)
 
             self.result_box.set_margin_bottom(10)
-            self.result_box.set_margin_top(3)
+            self.result_box.set_margin_top(0)
             self.apply_css(self.result_box)
             self.scroll_container.set_visible(True)
         else:
-            # Keep the scroll container visible to maintain consistent window width
-            # Remove margins when empty to avoid unnecessary space
-            self.result_box.set_margin_bottom(0)
-            self.result_box.set_margin_top(0)
-            self.scroll_container.set_visible(True)
+            # Hide the scroll container completely when empty to avoid any extra spacing
+            self.scroll_container.set_visible(False)
         logger.debug("render %s results", len(results))
