@@ -6,21 +6,20 @@ from pathlib import Path
 from gi.repository import Gio
 
 from ulauncher.utils.launch_detached import launch_detached
-from ulauncher.utils.Settings import Settings
+from ulauncher.utils.Settings import get_settings
 
 logger = logging.getLogger()
 
 
 def launch_app(desktop_entry_name):
     app_id = Path(desktop_entry_name).stem if desktop_entry_name.endswith(".desktop") else desktop_entry_name
-    settings = Settings.load()
+    settings = get_settings()
     app = Gio.DesktopAppInfo.new(desktop_entry_name)
     assert app
     app_exec = app.get_commandline()
     assert app_exec
     # strip field codes %f, %F, %u, %U, etc
     app_exec = re.sub(r"\%[uUfFdDnNickvm]", "", app_exec).strip()
-    app_wm_id = (app.get_string("StartupWMClass") or Path(app_exec).name).lower()
     prefer_raise = settings.raise_if_started or app.get_boolean("SingleMainWindow")
     if prefer_raise and app_exec:
         return

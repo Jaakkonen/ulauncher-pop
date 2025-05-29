@@ -1,21 +1,9 @@
 from __future__ import annotations
-
 import logging
+from gi.repository import Gdk, Gio  # type: ignore[attr-defined]
 
-from gi.repository import Gdk, GdkX11, Gio  # type: ignore[attr-defined]
-
-from ulauncher.utils.environment import IS_X11
 
 logger = logging.getLogger()
-if IS_X11:
-    try:
-        # Import will fail if Xlib is not installed
-        from Xlib.display import Display as XlibDisplay
-
-        from ulauncher.utils.ewmh import EWMH
-
-    except ModuleNotFoundError:
-        XlibDisplay = None
 
 
 def get_monitor(use_mouse_position: bool = False) -> Gdk.Monitor | None:

@@ -1,10 +1,8 @@
-import subprocess
-from typing import Callable, Iterable, Literal, overload
+from typing import Callable
 import json
 
 from ulauncher.modes.poplauncher.poplauncher_ipc import PopRequest, PopResponse, TPopRequest, TPopResponse
 from gi.repository import Gio, GLib
-from ulauncher.api.result import Result
 
 
 class PopLauncherGLibImpl:

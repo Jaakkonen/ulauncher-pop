@@ -1,18 +1,12 @@
 from __future__ import annotations
 
 import logging
-import time
 from functools import cache
 
 from gi.repository import Gio, Gtk
 
-from ulauncher.api.shared.query import Query
-from ulauncher.config import APP_ID, FIRST_RUN
-from ulauncher.modes.extensions.ExtensionController import ExtensionController
-from ulauncher.modes.extensions.ExtensionSocketServer import ExtensionSocketServer
+from ulauncher.config import APP_ID
 from ulauncher.ui.windows.UlauncherWindow import UlauncherWindow
-from ulauncher.utils.hotkey_controller import HotkeyController
-from ulauncher.utils.Settings import Settings
 
 logger = logging.getLogger()
 
@@ -27,7 +21,6 @@ class UlauncherApp(Gtk.Application):
     # So all methods except __init__ runs on the main app
     _query = ""
     window: UlauncherWindow | None = None
-    preferences = None  # TODO: Implement preferences window
 
     @classmethod
     @cache
@@ -40,8 +33,8 @@ class UlauncherApp(Gtk.Application):
         self.connect("startup", self.setup)  # runs only once on the main instance
 
     @property
-    def query(self) -> Query:
-        return Query(self._query)
+    def query(self) -> str:
+        return self._query
 
     @query.setter
     def query(self, value: str) -> None:
@@ -68,41 +61,7 @@ class UlauncherApp(Gtk.Application):
         return 0
 
     def setup(self, _):
-        settings = Settings.load()
         self.hold()  # Keep the app running even without a window
-
-        if FIRST_RUN or settings.hotkey_show_app:
-            if HotkeyController.is_supported():
-                hotkey = "<Primary>space"
-                if settings.hotkey_show_app and not HotkeyController.is_plasma():
-                    hotkey = settings.hotkey_show_app
-                if HotkeyController.setup_default(hotkey):
-                    display_name = Gtk.accelerator_get_label(*Gtk.accelerator_parse(hotkey))
-                    body = f'Ulauncher has added a global keyboard shortcut: "{display_name}" to your desktop settings'
-                    notification_id = "de_hotkey_auto_created"
-                    notification = Gio.Notification.new("Global shortcut created")
-                    notification.set_default_action("-")  # Add non-existing action to prevent activating on click
-                    notification.set_body(body)
-
-            else:
-                notification_id = "de_hotkey_unsupported"
-                notification = Gio.Notification.new("Cannot create global shortcut")
-                notification.set_default_action("app.show-preferences")
-                notification.set_body(
-                    "Ulauncher doesn't support setting global keyboard shortcuts for your desktop. "
-                    "There are more details on this in the preferences view (click here to open)."
-                )
-
-            settings.hotkey_show_app = ""  # Remove json file setting so the notification won't show again
-            settings.save()
-            notification.set_priority(Gio.NotificationPriority.URGENT)
-            self.send_notification(notification_id, notification)
-
-        ExtensionSocketServer.get_instance().start()
-        time.sleep(0.01)
-        for controller in ExtensionController.iterate():
-            if controller.is_enabled and not controller.has_error:
-                controller.start()
 
     def show_launcher(self):
         if not self.window:

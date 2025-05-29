@@ -43,13 +43,3 @@ def load_icon_texture(icon: str, size: int, scaling_factor: int = 1) -> Gdk.Text
         logger.warning("Could not load specified icon %s (%s). Will use fallback icon", icon, e)
         return load_icon_texture(DEFAULT_EXE_ICON, size, scaling_factor)
 
-
-# Keep backward compatibility
-@lru_cache(maxsize=50)
-def load_icon_surface(icon: str, size: int, scaling_factor: int = 1):
-    """
-    Deprecated: Use load_icon_texture instead.
-    This function is kept for backward compatibility but should be updated.
-    """
-    logger.warning("load_icon_surface is deprecated, use load_icon_texture instead")
-    return load_icon_texture(icon, size, scaling_factor)

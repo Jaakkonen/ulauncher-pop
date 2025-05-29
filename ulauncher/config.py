@@ -11,8 +11,6 @@ from ulauncher import paths as PATHS
 APP_ID = os.getenv("ULAUNCHER_APP_ID", "io.ulauncher.Ulauncher")
 API_VERSION = "3.0"
 VERSION = ulauncher.version
-FIRST_RUN = not os.path.exists(PATHS.CONFIG)  # If there is no config dir, assume it's the first run
-FIRST_V6_RUN = not os.path.exists(PATHS.STATE)
 
 if not os.path.exists(PATHS.ASSETS):
     raise OSError(PATHS.ASSETS)

@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
-
-from ulauncher.api.shared.query import Query
 from ulauncher.config import PATHS
 from ulauncher.ui.ResultWidget import ResultWidget
 from ulauncher.utils.json_utils import json_load, json_save
@@ -29,7 +26,7 @@ class ItemNavigation:
             return self.result_widgets[self.index]
         return None
 
-    def get_default(self, query: Query) -> int:
+    def get_default(self, query: str) -> int:
         """
         Get the index of the result that should be selected (0 by default)
         """
@@ -40,7 +37,7 @@ class ItemNavigation:
                 return index
         return 0
 
-    def select_default(self, query: Query) -> None:
+    def select_default(self, query: str) -> None:
         self.select(self.get_default(query))
 
     def select(self, index: int) -> None:
@@ -60,7 +57,7 @@ class ItemNavigation:
         next_result = (self.index or 0) + 1
         self.select(next_result if next_result < len(self.result_widgets) else 0)
 
-    def activate(self, query: Query, alt: bool = False) -> bool:
+    def activate(self, query: str, alt: bool = False) -> bool:
         """
         Return boolean - True if Ulauncher window should be kept open
         """

@@ -48,29 +48,3 @@ def get_matching_blocks(query: str, text: str) -> tuple[list, int]:
     return output, total_len
 
 
-def get_score(query: str, text: str) -> float:
-    """
-    Uses get_matching_blocks() to figure out how much of the query that matches the text,
-    and tries to weight this to slightly favor shorter results and largely favor word matches
-    :returns: number between 0 and 100
-    """
-
-    if not query or not text:
-        return 0.0
-
-    query_len = len(query)
-    text_len = len(text)
-    max_len = max(query_len, text_len)
-    blocks, matching_chars = get_matching_blocks(query, text)
-
-    # Ratio of the query that matches the text
-    base_similarity = matching_chars / query_len
-
-    # Lower the score if the match is in the middle of a word.
-    for index, _ in blocks:
-        is_word_boundary = index == 0 or text[index - 1] == " "
-        if not is_word_boundary:
-            base_similarity -= 0.5 / query_len
-
-    # Rank matches lower for each extra character, to slightly favor shorter ones.
-    return 100 * base_similarity * query_len / (query_len + (max_len - query_len) * 0.001)

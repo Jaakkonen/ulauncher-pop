@@ -1,27 +1,18 @@
 from __future__ import annotations
 
 import logging
-import subprocess
 from typing import Any
 
 from gi.repository import Gdk, Gtk
 
-from ulauncher.api.result import Result
-from ulauncher.config import PATHS
-from ulauncher.modes.apps import AppResult
+from ulauncher.modes.poplauncher.result import Result
 from ulauncher.modes.apps.launch_app import launch_app
-from ulauncher.modes.extensions.DeferredResultRenderer import DeferredResultRenderer
-from ulauncher.modes.extensions.ExtensionSocketServer import ExtensionSocketServer
 from ulauncher.modes.PopLauncher import PopLauncherProvider
 from ulauncher.modes.poplauncher.poplauncher_ipc import PopResponse, TPopResponse
-from ulauncher.modes.shortcuts.run_script import run_script
-from ulauncher.ui import LayerShell
 from ulauncher.ui.ItemNavigation import ItemNavigation
 from ulauncher.ui.ResultWidget import ResultWidget
-from ulauncher.utils.launch_detached import open_detached
-from ulauncher.utils.load_icon_surface import load_icon_texture
-from ulauncher.utils.Settings import Settings
-from ulauncher.utils.Theme import Theme
+from ulauncher.utils.Settings import get_settings
+from ulauncher.utils.Theme import get_theme_css
 from ulauncher.utils.wm import get_monitor, get_text_scaling_factor
 
 logger = logging.getLogger()
@@ -31,11 +22,11 @@ class UlauncherWindow(Gtk.ApplicationWindow):
     _css_provider = None
     results_nav = None
     is_dragging = False
-    layer_shell_enabled = False
-    settings = Settings.load()
+    # layer_shell_enabled = False
+    settings = get_settings()
     _result_provider: PopLauncherProvider # ResultProvider
 
-    def handle_event(self: UlauncherWindow, event: bool | list | str | dict[str, Any] | TPopResponse) -> None:  # noqa: PLR0912
+    def handle_event(self: UlauncherWindow, event: bool | list | str | dict[str, Any] | TPopResponse) -> None:
         """
         Handles event from mode or extension.
 
@@ -95,8 +86,8 @@ class UlauncherWindow(Gtk.ApplicationWindow):
 
         self._result_provider = PopLauncherProvider(self.handle_event)
 
-        if LayerShell.is_supported():
-            self.layer_shell_enabled = LayerShell.enable(self)
+        # if LayerShell.is_supported():
+        #     self.layer_shell_enabled = LayerShell.enable(self)
 
         # This box exists only for setting the margin conditionally, based on ^
         # without the theme being able to override it
@@ -206,7 +197,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             if result is False:
                 self.hide_and_clear_input()
 
-    def on_input_key_press(self, controller: Gtk.EventControllerKey, keyval: int, keycode: int, state: Gdk.ModifierType) -> bool:  # noqa: PLR0911, PLR0912
+    def on_input_key_press(self, _controller: Gtk.EventControllerKey, keyval: int, _keycode: int, state: Gdk.ModifierType) -> bool:
         """
         Triggered by user key press
         Return True to stop other handlers from being invoked for the event
@@ -257,7 +248,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
                     return True
         return False
 
-    def on_mouse_down(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float) -> None:
+    def on_mouse_down(self, gesture: Gtk.GestureClick, _n_press: int, x: float, y: float) -> None:
         """
         Move the window on drag
         """
@@ -301,7 +292,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
     def apply_theme(self):
         if not self._css_provider:
             self._css_provider = Gtk.CssProvider()
-        theme_css = Theme.load(self.settings.theme_name).get_css().encode()
+        theme_css = get_theme_css(self.settings.theme_name).encode()
         self._css_provider.load_from_data(theme_css, -1)
         self.apply_css(self)
 
@@ -311,17 +302,9 @@ class UlauncherWindow(Gtk.ApplicationWindow):
 
         monitor = get_monitor(self.settings.render_on_screen != "default-monitor")
         if monitor:
-            text_scaling_factor = get_text_scaling_factor()
             geo = monitor.get_geometry()
             max_height = geo.height - (geo.height * 0.15) - 100  # 100 is roughly the height of the text input
 
-            window_width = int(350.0 * text_scaling_factor)
-            pos_x = int(geo.width * 0.5 - window_width * 0.5 + geo.x)
-            pos_y = int(geo.y + geo.height * 0.12)
-
-
-
-            # self.set_size_request(window_width, -1)
             self.scroll_container.set_max_content_height(max_height)
 
             # Set margins for shadow effect
@@ -331,11 +314,13 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             self.window_frame.set_margin_start(shadow_size)
             self.window_frame.set_margin_end(shadow_size)
 
-            if self.layer_shell_enabled:
-                LayerShell.set_vertical_position(self, pos_y)
-            else:
-                # GTK4 doesn't have move() for ApplicationWindow, use present() instead
-                self.present()
+            self.present()
+
+            # if self.layer_shell_enabled:
+            #     LayerShell.set_vertical_position(self, pos_y)
+            # else:
+            #     # GTK4 doesn't have move() for ApplicationWindow, use present() instead
+            #     self.present()
 
     def show(self):
         self.present()
@@ -363,9 +348,6 @@ class UlauncherWindow(Gtk.ApplicationWindow):
     def hide_and_clear_input(self):
         self.input.set_text("")
         self.hide()
-
-    def get_default_results(self) -> list[Result]:
-        return [] #AppResult.get_most_frequent(self.settings.max_recent_apps)
 
     def show_results(self, results: list[Result]) -> None:
         """

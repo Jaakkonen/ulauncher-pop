@@ -5,10 +5,9 @@ from html import unescape
 
 from gi.repository import Gdk, Gtk, Pango
 
-from ulauncher.api.result import Result
-from ulauncher.api.shared.query import Query
+from ulauncher.modes.poplauncher.result import Result
 from ulauncher.utils.load_icon_surface import load_icon_texture
-from ulauncher.utils.Settings import Settings
+from ulauncher.utils.Settings import get_settings
 from ulauncher.utils.text_highlighter import highlight_text
 from ulauncher.utils.wm import get_text_scaling_factor
 
@@ -20,14 +19,14 @@ logger = logging.getLogger()
 class ResultWidget(Gtk.Box):
     index: int = 0
     name: str
-    query: Query
+    query: str
     result: Result
     item_box: Gtk.Box
     shortcut_label: Gtk.Label
     title_box: Gtk.Box
     text_container: Gtk.Box
 
-    def __init__(self, result: Result, index: int, query: Query):
+    def __init__(self, result: Result, index: int, query: str):
         super().__init__()
         self.result = result
         self.query = query
@@ -104,7 +103,7 @@ class ResultWidget(Gtk.Box):
         """
         Set index for the item and assign shortcut
         """
-        jump_keys = Settings.load().get_jump_keys()
+        jump_keys = get_settings().get_jump_keys()
         if index < len(jump_keys):
             self.index = index
             self.shortcut_label.set_text(f"Alt+{jump_keys[index]}")
@@ -152,7 +151,7 @@ class ResultWidget(Gtk.Box):
         for label in labels:
             self.title_box.append(label)
 
-    def on_click(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float) -> None:
+    def on_click(self, gesture: Gtk.GestureClick, _n_press: int, _x: float, _y: float) -> None:
         window = self.get_root()
         window.select_result(self.index)  # type: ignore[attr-defined]
         alt = gesture.get_current_button() != 1  # right click
@@ -162,7 +161,7 @@ class ResultWidget(Gtk.Box):
         elif result is not None:
             window.handle_event(result)  # type: ignore[attr-defined]
 
-    def on_mouse_hover(self, controller: Gtk.EventControllerMotion, x: float, y: float) -> None:
+    def on_mouse_hover(self, _controller: Gtk.EventControllerMotion, _x: float, _y: float) -> None:
         # GTK4: Simplified mouse hover handling
         # In GTK4, the motion controller is more reliable for mouse events
         # so we don't need to check the device source

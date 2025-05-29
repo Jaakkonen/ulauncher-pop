@@ -135,10 +135,12 @@ dev = [
     "ruff",
     "typos",
     "build",
+    "vulture",
 ]
 
 [tool.pdm.scripts]
 start = {call="ulauncher.main:main", env={ ULAUNCHER_SYSTEM_DATA_DIR="./data", ULAUNCHER_APP_ID="io.ulauncher.Ulauncher.dev" }}
+dead-code = "vulture"
 
 
 [build-system]
@@ -149,3 +151,13 @@ build-backend = "pdm.backend"
 # gi.repository is a dynamically populated namespace where only stubs are available
 # TODO: Add a proxy module to allow importing gi.repository which checks the runtime availability of the modules.
 reportMissingModuleSource = "information"
+
+[tool.vulture]
+min_confidence = 60
+sort_by_size = true
+paths = ["ulauncher/"]
+ignore_decorators = ["@property", "@staticmethod", "@classmethod"]
+ignore_names = [
+    # Keep main entry point
+    "main"
+]
