@@ -18,6 +18,9 @@ keywords = [ "linux", "desktop", "application", "launcher", "gtk" ]
 dependencies = [ "PyGObject", "pycairo", "python-xlib" ]
 dynamic = ["version"]
 
+[project.scripts]
+ulauncher = "ulauncher.main:main"
+
 [tool.setuptools.dynamic]
 version = {attr = "ulauncher.version"}
 
