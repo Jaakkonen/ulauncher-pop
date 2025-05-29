@@ -2,9 +2,9 @@
 
 version = "6.0.0-beta6"
 gi_versions = {
-    "Gtk": "3.0",
-    "Gdk": "3.0",
-    "GdkX11": "3.0",
+    "Gtk": "4.0",
+    "Gdk": "4.0",
+    # "GdkX11": "4.0",
     "GdkPixbuf": "2.0",
     "Pango": "1.0",
 }

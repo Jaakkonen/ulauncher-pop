@@ -31,13 +31,14 @@ class HotkeyDialog(Gtk.MessageDialog):
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, margin_start=10, margin_end=10)
         self._hotkey_input = Gtk.Entry(editable=False)
-        vbox.pack_start(self._hotkey_input, True, True, 5)
-        vbox.pack_start(Gtk.Label(use_markup=True, label=f"<i><small>{footer_notice}</small></i>"), True, True, 5)
-        self.get_content_area().add(vbox)
+        vbox.append(self._hotkey_input)
+        vbox.append(Gtk.Label(use_markup=True, label=f"<i><small>{footer_notice}</small></i>"))
+        self.get_content_area().set_child(vbox)
 
-        self.show_all()
         self.connect("response", self.handle_response)
-        self.connect("key-press-event", self.on_key_press)
+        key_controller = Gtk.EventControllerKey()
+        key_controller.connect("key-pressed", self.on_key_press)
+        self.add_controller(key_controller)
 
     def handle_response(self, _widget: HotkeyDialog, response_id: int) -> None:
         if response_id == RESPONSES.OK:
@@ -59,21 +60,26 @@ class HotkeyDialog(Gtk.MessageDialog):
     def save_and_close(self):
         self.hide()
 
-    def on_key_press(self, _entry_widget: Gtk.Entry, event: Gdk.EventKey) -> None:
-        key_name = Gtk.accelerator_name(event.keyval, event.state)
-        label = Gtk.accelerator_get_label(event.keyval, event.state)
+    def on_key_press(self, controller: Gtk.EventControllerKey, keyval: int, keycode: int, state: Gdk.ModifierType) -> bool:
+        key_name = Gtk.accelerator_name(keyval, state)
+        label = Gtk.accelerator_get_label(keyval, state)
         breadcrumb = label.split("+")
 
         # treat Enter w/o modifiers as "submit"
         if self._hotkey and key_name == "Return":
             self.save_and_close()
+            return True
 
         if self._hotkey and key_name == "BackSpace":
             self.set_hotkey()
+            return True
 
         # Must have at least one modifier (meaning two parts) and the last part must not be one
         if len(breadcrumb) > 1 and breadcrumb[-1] not in MODIFIERS:
             self.set_hotkey(key_name)
+            return True
+
+        return False
 
     def run(self):
         super().run()

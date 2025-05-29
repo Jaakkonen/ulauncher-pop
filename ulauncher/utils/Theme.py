@@ -19,7 +19,6 @@ CSS_RESET = """
   font-variant: inherit;
   font-weight: inherit;
   text-shadow: inherit;
-  -icon-shadow: inherit;
   background-color: initial;
   box-shadow: initial;
   margin: initial;

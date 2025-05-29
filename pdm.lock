@@ -3,9 +3,12 @@
 
 [metadata]
 groups = ["default"]
-strategy = ["cross_platform", "inherit_metadata"]
-lock_version = "4.4.1"
-content_hash = "sha256:6180387d5d7bc0afdb33b36d1cade1c95152f56d71ce21bae6d9dbe43e3ae264"
+strategy = ["inherit_metadata"]
+lock_version = "4.5.0"
+content_hash = "sha256:ac8adc55797ff806270046f99a7bee0e786380b5325ff4cff7ddb7489813d80e"
+
+[[metadata.targets]]
+requires_python = ">=3.11"
 
 [[package]]
 name = "pycairo"

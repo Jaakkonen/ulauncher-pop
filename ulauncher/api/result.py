@@ -4,8 +4,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ulauncher.api.shared.query import Query
-from ulauncher.utils.basedataclass import BaseDataClass
-from ulauncher.utils.fuzzy_search import get_score
+
 
 DEFAULT_ACTION = True  #  keep window open and do nothing
 

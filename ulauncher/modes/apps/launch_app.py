@@ -7,7 +7,6 @@ from gi.repository import Gio
 
 from ulauncher.utils.launch_detached import launch_detached
 from ulauncher.utils.Settings import Settings
-from ulauncher.utils.wm import try_raise_app
 
 logger = logging.getLogger()
 
@@ -23,7 +22,7 @@ def launch_app(desktop_entry_name):
     app_exec = re.sub(r"\%[uUfFdDnNickvm]", "", app_exec).strip()
     app_wm_id = (app.get_string("StartupWMClass") or Path(app_exec).name).lower()
     prefer_raise = settings.raise_if_started or app.get_boolean("SingleMainWindow")
-    if prefer_raise and app_exec and try_raise_app(app_wm_id):
+    if prefer_raise and app_exec:
         return
 
     if app.get_boolean("DBusActivatable"):

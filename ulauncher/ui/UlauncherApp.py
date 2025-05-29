@@ -10,8 +10,6 @@ from ulauncher.api.shared.query import Query
 from ulauncher.config import APP_ID, FIRST_RUN
 from ulauncher.modes.extensions.ExtensionController import ExtensionController
 from ulauncher.modes.extensions.ExtensionSocketServer import ExtensionSocketServer
-from ulauncher.ui.AppIndicator import AppIndicator
-from ulauncher.ui.windows.PreferencesWindow import PreferencesWindow
 from ulauncher.ui.windows.UlauncherWindow import UlauncherWindow
 from ulauncher.utils.hotkey_controller import HotkeyController
 from ulauncher.utils.Settings import Settings
@@ -29,8 +27,7 @@ class UlauncherApp(Gtk.Application):
     # So all methods except __init__ runs on the main app
     _query = ""
     window: UlauncherWindow | None = None
-    preferences: PreferencesWindow | None = None
-    _appindicator: AppIndicator | None = None
+    preferences = None  # TODO: Implement preferences window
 
     @classmethod
     @cache
@@ -56,7 +53,7 @@ class UlauncherApp(Gtk.Application):
     def do_startup(self):
         Gtk.Application.do_startup(self)
         Gio.ActionMap.add_action_entries(
-            self, [("show-preferences", self.show_preferences, None), ("set-query", self.activate_query, "s")]
+            self, [("set-query", self.activate_query, "s")]
         )
 
     def do_activate(self, *_args, **_kwargs):
@@ -73,9 +70,6 @@ class UlauncherApp(Gtk.Application):
     def setup(self, _):
         settings = Settings.load()
         self.hold()  # Keep the app running even without a window
-
-        if settings.show_tray_icon:
-            self.toggle_appindicator(True)
 
         if FIRST_RUN or settings.hotkey_show_app:
             if HotkeyController.is_supported():
@@ -115,23 +109,7 @@ class UlauncherApp(Gtk.Application):
             self.window = UlauncherWindow(application=self)
         self.window.show()
 
-    def show_preferences(self, page=None, *_):
-        if not isinstance(page, str):
-            page = None  # show_preferences is also bound to an event, passing a widget as the first arg
-        if self.window:
-            self.window.hide()
-
-        if self.preferences:
-            self.preferences.present(page)
-        else:
-            self.preferences = PreferencesWindow(application=self)
-            self.preferences.show(page)
-
     def activate_query(self, _action, variant, *_):
         self.activate()
         self.query = variant.get_string()
 
-    def toggle_appindicator(self, enable: bool) -> None:
-        if not self._appindicator:
-            self._appindicator = AppIndicator(self)
-        self._appindicator.switch(enable)

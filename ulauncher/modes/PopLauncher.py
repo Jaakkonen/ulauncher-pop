@@ -80,6 +80,7 @@ class PopLauncherGLibImpl:
     """
     assert _source is self.stdout
 
+    line = None
     try:
       line, _length = self.stdout.read_line_finish_utf8(result)
       if line is None:
@@ -87,9 +88,16 @@ class PopLauncherGLibImpl:
           "Tried reading from pop-launcher but got None. Did the process give EOF without cancelling the read task?"
         )
         raise RuntimeError(errmsg)
-      #response = json.loads(line)
-      response = PopResponse.from_json(line)
-      self.handler(response)
+      try:
+        response = PopResponse.from_json(line)
+      except json.decoder.JSONDecodeError as e:
+        e.add_note(f"Invalid output from pop-launcher. Expected JSON, received: {line}")
+        raise e
+      try:
+        self.handler(response)
+      except Exception as e:
+        e.add_note(f"Error handling response from pop-launcher: {response}")
+        raise e
     finally:
       self._queue_read()
 

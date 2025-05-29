@@ -15,7 +15,6 @@ class Settings(JsonConf):
     base_width = 750
     raise_if_started = False
     render_on_screen = "mouse-pointer-monitor"
-    show_tray_icon = True
     terminal_command = ""
     theme_name = "light"
     arrow_key_aliases = "hjkl"
@@ -24,8 +23,6 @@ class Settings(JsonConf):
 
     # Convert dash to underscore
     def __setitem__(self, key, value):
-        if key.replace("-", "_") == "show_indicator_icon":
-            key = "show_tray_icon"
         super().__setitem__(key.replace("-", "_"), value)
 
     def get_jump_keys(self):

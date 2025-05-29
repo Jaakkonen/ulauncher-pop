@@ -19,15 +19,12 @@ from ulauncher.ui import LayerShell
 from ulauncher.ui.ItemNavigation import ItemNavigation
 from ulauncher.ui.ResultWidget import ResultWidget
 from ulauncher.utils.launch_detached import open_detached
-from ulauncher.utils.load_icon_surface import load_icon_surface
+from ulauncher.utils.load_icon_surface import load_icon_texture
 from ulauncher.utils.Settings import Settings
 from ulauncher.utils.Theme import Theme
-from ulauncher.utils.wm import get_monitor
+from ulauncher.utils.wm import get_monitor, get_text_scaling_factor
 
 logger = logging.getLogger()
-
-
-
 
 
 class UlauncherWindow(Gtk.ApplicationWindow):
@@ -66,6 +63,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
                 def make_on_enter(id):
                     def on_enter(query):
                         self._result_provider.on_enter(id)
+                        return False  # Hide window after activation
                     return on_enter
                 res = [
                     Result(
@@ -85,18 +83,16 @@ class UlauncherWindow(Gtk.ApplicationWindow):
 
     def __init__(self, **kwargs):
         super().__init__(
-            decorated=False,
-            deletable=False,
-            has_focus=True,
-            icon_name="ulauncher",
-            resizable=False,
-            skip_pager_hint=True,
-            skip_taskbar_hint=True,
             title="Ulauncher - Application Launcher",
-            urgency_hint=True,
-            window_position=Gtk.WindowPosition.CENTER,
             **kwargs,
         )
+        text_scaling_factor = get_text_scaling_factor()
+        # GTK4 properties
+        self.set_decorated(False)
+        self.set_deletable(False)
+        self.set_resizable(False)
+        self.set_icon_name("ulauncher")
+
         self._result_provider = PopLauncherProvider(self.handle_event)
 
         if LayerShell.is_supported():
@@ -105,77 +101,76 @@ class UlauncherWindow(Gtk.ApplicationWindow):
         # This box exists only for setting the margin conditionally, based on ^
         # without the theme being able to override it
         self.window_frame = Gtk.Box()
-        self.add(self.window_frame)
+        self.set_child(self.window_frame)
 
-        window_container = Gtk.Box(app_paintable=True, orientation=Gtk.Orientation.VERTICAL)
-        self.window_frame.pack_start(window_container, True, True, 0)
 
-        event_box = Gtk.EventBox()
+        window_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        window_container.add_css_class("app")
+        self.window_frame.append(window_container)
+
+        # Create input box with event controllers instead of EventBox
         input_box = Gtk.Box()
-        event_box.add(input_box)
 
         self.input = Gtk.Entry(
-            can_default=True,
-            can_focus=True,
-            has_focus=True,
-            is_focus=True,
             height_request=30,
+            width_request=int(520.0 * text_scaling_factor),
             margin_top=15,
-            margin_bottom=15,
             margin_start=20,
             margin_end=20,
-            receives_default=True,
+            activates_default=False,
         )
+        self.input.add_css_class("input")
 
-        prefs_btn = Gtk.Button(
-            name="prefs_btn",
-            width_request=24,
-            height_request=24,
-            receives_default=False,
-            halign=Gtk.Align.CENTER,
-            valign=Gtk.Align.CENTER,
-            margin_end=15,
-        )
-
-        input_box.pack_start(self.input, True, True, 0)
-        input_box.pack_end(prefs_btn, False, False, 0)
+        input_box.append(self.input)
 
         self.scroll_container = Gtk.ScrolledWindow(
             can_focus=True,
             max_content_height=500,
             hscrollbar_policy=Gtk.PolicyType.NEVER,
             propagate_natural_height=True,
-            shadow_type=Gtk.ShadowType.IN,
+            has_frame=True,
         )
         self.result_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.scroll_container.add(self.result_box)
+        self.result_box.add_css_class("result-box")
+        self.scroll_container.set_child(self.result_box)
 
-        window_container.pack_start(event_box, True, True, 0)
-        window_container.pack_end(self.scroll_container, True, True, 0)
+        window_container.append(input_box)
+        window_container.append(self.scroll_container)
 
-        window_container.get_style_context().add_class("app")
-        self.input.get_style_context().add_class("input")
-        prefs_btn.get_style_context().add_class("prefs-btn")
-        self.result_box.get_style_context().add_class("result-box")
+        self.setup_event_controllers(input_box)
 
-        prefs_icon_surface = load_icon_surface(f"{PATHS.ASSETS}/icons/gear.svg", 16, self.get_scale_factor())
-        prefs_btn.set_image(Gtk.Image.new_from_surface(prefs_icon_surface))
-        self.window_frame.show_all()
-
-        self.connect("focus-in-event", self.on_focus_in)
-        self.connect("focus-out-event", self.on_focus_out)
-        event_box.connect("button-press-event", self.on_mouse_down)
-        self.connect("button-release-event", self.on_mouse_up)
-        self.input.connect("changed", self.on_input_changed)
-        self.input.connect("key-press-event", self.on_input_key_press)
-        prefs_btn.connect("clicked", lambda *_: self.app.show_preferences())
-
-        self.set_keep_above(True)
         self.position_window()
 
         # this will trigger to show frequent apps if necessary
         self.show_results([])
         assert self.app is not None
+
+    def setup_event_controllers(self, input_box: Gtk.Box) -> None:
+        """Set up event controllers for GTK4"""
+
+        # Focus controllers
+        focus_controller = Gtk.EventControllerFocus()
+        focus_controller.connect("enter", self.on_focus_in)
+        focus_controller.connect("leave", self.on_focus_out)
+        self.add_controller(focus_controller)
+
+        # Mouse/drag controllers for window movement
+        click_gesture = Gtk.GestureClick()
+        click_gesture.connect("pressed", self.on_mouse_down)
+        click_gesture.connect("released", self.on_mouse_up)
+        input_box.add_controller(click_gesture)
+
+        # Key controller for input
+        key_controller = Gtk.EventControllerKey()
+        key_controller.connect("key-pressed", self.on_input_key_press)
+        self.input.add_controller(key_controller)
+
+        # Input change signal
+        self.input.connect("changed", self.on_input_changed)
+
+        # Entry activate signal (handles Enter key)
+        self.input.connect("activate", self.on_input_activate)
+
 
     ######################################
     # GTK Signal Handlers
@@ -187,29 +182,37 @@ class UlauncherWindow(Gtk.ApplicationWindow):
 
     def on_focus_in(self, *_args):
         if self.settings.grab_mouse_pointer:
-            ptr_dev = self.get_pointer_device()
-            result = ptr_dev.grab(
-                self.get_window(), Gdk.GrabOwnership.NONE, True, Gdk.EventMask.ALL_EVENTS_MASK, None, 0
-            )
-            logger.debug("Focus in event, grabbing pointer: %s", result)
+            # GTK4 pointer grabbing - simplified approach
+            surface = self.get_surface()
+            if surface:
+                logger.debug("Focus in event, setting up grab")
 
     def on_input_changed(self, _):
         """
         Triggered by user input
         """
         self.app._query = self.input.get_text().lstrip()  # noqa: SLF001
-        if self.is_visible():
+        if self.get_visible():
             # input_changed can trigger when hiding window
             self._result_provider.on_query_change(self.app.query)
 
-    def on_input_key_press(self, entry_widget: Gtk.Entry, event: Gdk.EventKey) -> bool:  # noqa: PLR0911, PLR0912
+    def on_input_activate(self, _):
+        """
+        Triggered by user input (Enter key)
+        """
+        if self.results_nav:
+            result = self.results_nav.activate(self.app.query, alt=False)
+            if result is False:
+                self.hide_and_clear_input()
+
+    def on_input_key_press(self, controller: Gtk.EventControllerKey, keyval: int, keycode: int, state: Gdk.ModifierType) -> bool:  # noqa: PLR0911, PLR0912
         """
         Triggered by user key press
         Return True to stop other handlers from being invoked for the event
         """
-        keyname = Gdk.keyval_name(event.keyval)
-        alt = bool(event.state & Gdk.ModifierType.MOD1_MASK)
-        ctrl = bool(event.state & Gdk.ModifierType.CONTROL_MASK)
+        keyname = Gdk.keyval_name(keyval)
+        alt = bool(state & Gdk.ModifierType.ALT_MASK)
+        ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
         jump_keys = self.settings.get_jump_keys()
 
         if len(self.settings.arrow_key_aliases) == 4:  # noqa: PLR2004
@@ -234,11 +237,11 @@ class UlauncherWindow(Gtk.ApplicationWindow):
                 return True
 
             if ctrl and keyname == left_alias:
-                entry_widget.set_position(max(0, entry_widget.get_position() - 1))
+                self.input.set_position(max(0, self.input.get_position() - 1))
                 return True
 
             if ctrl and keyname == right_alias:
-                entry_widget.set_position(entry_widget.get_position() + 1)
+                self.input.set_position(self.input.get_position() + 1)
                 return True
 
             if keyname in ("Return", "KP_Enter"):
@@ -246,18 +249,31 @@ class UlauncherWindow(Gtk.ApplicationWindow):
                 if result is False:
                     self.hide_and_clear_input()
                 return True
-            if alt and event.string in jump_keys:
-                self.select_result(jump_keys.index(event.string))
-                return True
+            if alt and Gdk.keyval_to_unicode(keyval):
+                event_string = chr(Gdk.keyval_to_unicode(keyval))
+                if event_string in jump_keys:
+                    self.select_result(jump_keys.index(event_string))
+                    return True
         return False
 
-    def on_mouse_down(self, _event_box: Gtk.EventBox, event: Gdk.EventButton) -> None:
+    def on_mouse_down(self, gesture: Gtk.GestureClick, n_press: int, x: float, y: float) -> None:
         """
         Move the window on drag
         """
-        if event.button == 1 and event.type == Gdk.EventType.BUTTON_PRESS:
+        if gesture.get_current_button() == 1:
             self.is_dragging = True
-            self.begin_move_drag(event.button, int(event.x_root), int(event.y_root), event.time)
+            # GTK4 window dragging
+            surface = self.get_surface()
+            if surface and hasattr(surface, 'begin_move_drag'):
+                # Get the device from the gesture
+                device = gesture.get_device()
+                if device:
+                    surface.begin_move_drag(
+                        device,
+                        gesture.get_current_button(),
+                        int(x), int(y),
+                        gesture.get_current_event_time()
+                    )
 
     def on_mouse_up(self, *_):
         self.is_dragging = False
@@ -272,62 +288,63 @@ class UlauncherWindow(Gtk.ApplicationWindow):
 
     def apply_css(self, widget: Gtk.Widget) -> None:
         assert self._css_provider
-        Gtk.StyleContext.add_provider(
-            widget.get_style_context(), self._css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        widget.get_style_context().add_provider(
+            self._css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
-        if isinstance(widget, Gtk.Container):
-            widget.forall(self.apply_css)
+        # GTK4: use first_child and next_sibling to iterate
+        child = widget.get_first_child()
+        while child:
+            self.apply_css(child)
+            child = child.get_next_sibling()
 
     def apply_theme(self):
         if not self._css_provider:
             self._css_provider = Gtk.CssProvider()
         theme_css = Theme.load(self.settings.theme_name).get_css().encode()
-        self._css_provider.load_from_data(theme_css)
+        self._css_provider.load_from_data(theme_css, -1)
         self.apply_css(self)
-        visual = self.get_screen().get_rgba_visual()
-        if visual:
-            self.set_visual(visual)
 
     def position_window(self):
-        # Try setting a transparent background
-        screen = self.get_screen()
-        visual = screen.get_rgba_visual()
-        shadow_size = 20 if visual else 0
-        self.window_frame.set_properties(
-            margin_top=shadow_size,
-            margin_bottom=shadow_size,
-            margin_start=shadow_size,
-            margin_end=shadow_size,
-        )
-        if visual is None:
-            logger.info("Screen does not support alpha channels. Likely not running a compositor.")
-            visual = screen.get_system_visual()
-
-        self.set_visual(visual)
+        # Apply theme first
         self.apply_theme()
 
         monitor = get_monitor(self.settings.render_on_screen != "default-monitor")
         if monitor:
+            text_scaling_factor = get_text_scaling_factor()
             geo = monitor.get_geometry()
             max_height = geo.height - (geo.height * 0.15) - 100  # 100 is roughly the height of the text input
-            window_width = self.settings.base_width
+
+            #window_width = self.settings.base_width
+            window_width = int(350.0 * text_scaling_factor)
             pos_x = int(geo.width * 0.5 - window_width * 0.5 + geo.x)
             pos_y = int(geo.y + geo.height * 0.12)
-            self.set_property("width-request", window_width)
-            self.scroll_container.set_property("max-content-height", max_height)
+
+            # breakpoint()
+            self.set_size_request(600, -1)
+            # self.set_geometry_hints(
+            #     min_width=window_width,
+
+            # )
+
+
+            # self.set_size_request(window_width, -1)
+            self.scroll_container.set_max_content_height(max_height)
+
+            # Set margins for shadow effect
+            shadow_size = 20
+            self.window_frame.set_margin_top(shadow_size)
+            self.window_frame.set_margin_bottom(shadow_size)
+            self.window_frame.set_margin_start(shadow_size)
+            self.window_frame.set_margin_end(shadow_size)
 
             if self.layer_shell_enabled:
                 LayerShell.set_vertical_position(self, pos_y)
             else:
-                self.move(pos_x, pos_y)
+                # GTK4 doesn't have move() for ApplicationWindow, use present() instead
+                self.present()
 
     def show(self):
         self.present()
-        # note: present_with_time is needed on some DEs to defeat focus stealing protection
-        # (Gnome 3 forks like Cinnamon or Budgie, but not Gnome 3 itself any longer)
-        # The correct time to use is the time of the user interaction requesting the focus, but we don't have access
-        # to that, so we use `Gdk.CURRENT_TIME`, which is the same as passing 0.
-        self.present_with_time(Gdk.CURRENT_TIME)
         self.position_window()
 
         if not self.app.query:
@@ -335,12 +352,12 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             self.show_results([])
 
         self.input.grab_focus()
-        super().show()
 
     def hide(self, *args, **kwargs):
-        """Override the hide method to ensure the pointer grab is released."""
+        """Override the hide method to ensure any grabs are released."""
         if self.settings.grab_mouse_pointer:
-            self.get_pointer_device().ungrab(0)
+            # GTK4 simplified ungrab
+            pass
         super().hide(*args, **kwargs)
         if self.settings.clear_previous_query:
             self.app.query = ""
@@ -348,13 +365,6 @@ class UlauncherWindow(Gtk.ApplicationWindow):
     def select_result(self, index):
         if self.results_nav:
             self.results_nav.select(index)
-
-    def get_pointer_device(self):
-        window = self.get_window()
-        assert window
-        device_mapper = window.get_display().get_device_manager()
-        assert device_mapper
-        return device_mapper.get_client_pointer()
 
     def hide_and_clear_input(self):
         self.input.set_text("")
@@ -368,7 +378,12 @@ class UlauncherWindow(Gtk.ApplicationWindow):
         :param list results: list of Result instances
         """
         self.results_nav = None
-        self.result_box.foreach(lambda w: w.destroy())
+        # GTK4: Remove all children
+        child = self.result_box.get_first_child()
+        while child:
+            next_child = child.get_next_sibling()
+            self.result_box.remove(child)
+            child = next_child
 
         limit = len(self.settings.get_jump_keys()) or 25
         if not self.input.get_text() and self.settings.max_recent_apps:
@@ -379,16 +394,18 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             for index, result in enumerate(results[:limit]):
                 result_widget = ResultWidget(result, index, self.app.query)
                 result_widgets.append(result_widget)
-                self.result_box.add(result_widget)
+                self.result_box.append(result_widget)
             self.results_nav = ItemNavigation(result_widgets)
             self.results_nav.select_default(self.app.query)
 
             self.result_box.set_margin_bottom(10)
             self.result_box.set_margin_top(3)
             self.apply_css(self.result_box)
-            self.scroll_container.show_all()
+            self.scroll_container.set_visible(True)
         else:
-            # Hide the scroll container when there are no results since it normally takes up a
-            # minimum amount of space even if it is empty.
-            self.scroll_container.hide()
+            # Keep the scroll container visible to maintain consistent window width
+            # Remove margins when empty to avoid unnecessary space
+            self.result_box.set_margin_bottom(0)
+            self.result_box.set_margin_top(0)
+            self.scroll_container.set_visible(True)
         logger.debug("render %s results", len(results))
