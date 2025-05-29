@@ -146,12 +146,12 @@ start = {call="ulauncher.main:main", env={ ULAUNCHER_SYSTEM_DATA_DIR="./data", U
 dead-code = "vulture"
 
 [tool.pdm.build]
-source-includes = ["share/"]
+source-includes = ["data/"]
 
 [tool.pdm.build.wheel-data]
 # Install data files to share/ulauncher (matching what paths.py expects)
 data = [
-    {path = "share/**/*", relative-to = "./data"}
+    {path = "data/share/**/*", relative-to = "data/"}
 ]
 
 [build-system]
