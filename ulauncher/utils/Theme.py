@@ -42,7 +42,8 @@ DEFAULT_CSS = """
 
 /* Icon sizing */
 .item-icon {
-  -gtk-icon-size: 40px;
+  -gtk-icon-size: 30px;
+  padding: 2px;
 }
 
 .item-icon-compact {
