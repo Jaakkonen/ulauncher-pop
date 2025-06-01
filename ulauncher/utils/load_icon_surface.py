@@ -2,44 +2,85 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from os.path import expanduser, isfile
 
-from gi.repository import Gdk, GdkPixbuf
+from gi.repository import Gdk, Gio, Gtk
 
 from ulauncher.config import PATHS
-from ulauncher.utils.get_icon_path import get_icon_path
 
 logger = logging.getLogger()
 
-DEFAULT_EXE_ICON = f"{PATHS.ASSETS}/icons/executable.png"
+DEFAULT_EXE_ICON = "application-x-executable"
 
 
 @lru_cache(maxsize=50)
-def load_icon_texture(icon: str, size: int, scaling_factor: int = 1) -> Gdk.Texture:
+def load_icon_paintable(icon: str, scale_factor: int = 1) -> Gtk.IconPaintable:
     """
-    Load an icon as a GdkTexture for GTK4.
-    This is the GTK4 replacement for load_icon_surface.
+    Load an icon as a Gtk.IconPaintable for GTK4.
+    Finds the best quality icon available and lets CSS handle sizing.
     """
-    real_size = size * scaling_factor
-    icon_path = None
-    try:
-        icon_path = get_icon_path(icon, real_size) or DEFAULT_EXE_ICON
+    if not icon:
+        icon = DEFAULT_EXE_ICON
 
-        # GTK4: Use texture creation directly from file when possible
-        # This avoids deprecated pixbuf APIs
+    display = Gdk.Display.get_default()
+    icon_theme = Gtk.IconTheme.get_for_display(display)
+
+    # Handle absolute paths for custom icons
+    if icon.startswith("/"):
+        icon = expanduser(icon)
+        if isfile(icon):
+            try:
+                # For custom icon files, load at high resolution for best quality
+                gfile = Gio.File.new_for_path(icon)
+                return Gtk.IconPaintable.new_for_file(gfile, 128, scale_factor)
+            except Exception as e:
+                logger.warning("Could not load custom icon %s (%s). Using fallback.", icon, e)
+                icon = DEFAULT_EXE_ICON
+
+    # For themed icons - look for best quality available
+    # Try different sizes to find the best quality icon, starting with higher resolutions
+    for size in [128, 96, 64, 48, 32, 24, 16]:
         try:
-            return Gdk.Texture.new_from_file(Gdk.File.new_for_path(icon_path))
+            paintable = icon_theme.lookup_icon(
+                icon,
+                None,  # fallbacks
+                size,
+                scale_factor,
+                Gtk.TextDirection.NONE,
+                0  # No flags - let GTK choose the best approach
+            )
+            if paintable:
+                return paintable
         except Exception:
-            # Fallback to pixbuf approach for scaling if direct loading fails
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(icon_path, real_size, real_size)
-            assert pixbuf
-            # Use the deprecated API for now, but it still works in GTK4
-            # TODO: Replace with a better approach when available
-            return Gdk.Texture.new_for_pixbuf(pixbuf)
-    except Exception as e:
-        if icon_path == DEFAULT_EXE_ICON:
-            msg = f"Could not load fallback icon: {icon_path}"
-            raise RuntimeError(msg) from e
+            continue
 
-        logger.warning("Could not load specified icon %s (%s). Will use fallback icon", icon, e)
-        return load_icon_texture(DEFAULT_EXE_ICON, size, scaling_factor)
+    logger.warning("Could not find themed icon %s. Using fallback.", icon)
+
+    # Final fallback to default executable icon
+    for size in [128, 96, 64, 48, 32, 24, 16]:
+        try:
+            paintable = icon_theme.lookup_icon(
+                DEFAULT_EXE_ICON,
+                None,
+                size,
+                scale_factor,
+                Gtk.TextDirection.NONE,
+                0
+            )
+            if paintable:
+                return paintable
+        except Exception:
+            continue
+
+    logger.error("Could not load fallback icon %s", DEFAULT_EXE_ICON)
+
+    # Ultimate fallback - use missing image icon
+    return icon_theme.lookup_icon(
+        "image-missing",
+        None,
+        32,
+        scale_factor,
+        Gtk.TextDirection.NONE,
+        0
+    )
 

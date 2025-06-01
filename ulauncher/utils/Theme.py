@@ -7,7 +7,7 @@ from pathlib import Path
 from ulauncher.config import PATHS
 
 logger = logging.getLogger()
-CSS_RESET = """
+DEFAULT_CSS = """
 * {
   color: inherit;
   font-size: inherit;
@@ -39,6 +39,15 @@ CSS_RESET = """
   transition-timing-function: initial;
   transition-delay: initial;
 }
+
+/* Icon sizing */
+.item-icon {
+  -gtk-icon-size: 40px;
+}
+
+.item-icon-compact {
+  -gtk-icon-size: 25px;
+}
 """
 
 def get_theme_css(theme_name: str) -> str:
@@ -51,4 +60,4 @@ def get_theme_css(theme_name: str) -> str:
     ]
     theme_path = next(path for path in css_theme_paths if path.stem == theme_name)
     content = theme_path.read_text()
-    return CSS_RESET + re.sub(r"(?<=url\([\"\'])(\./)?(?!\/)", f"{theme_path.parent}/", content)
+    return DEFAULT_CSS + re.sub(r"(?<=url\([\"\'])(\./)?(?!\/)", f"{theme_path.parent}/", content)

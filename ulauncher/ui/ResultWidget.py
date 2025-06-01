@@ -6,7 +6,7 @@ from html import unescape
 from gi.repository import Gdk, Gtk, Pango
 
 from ulauncher.modes.poplauncher.result import Result
-from ulauncher.utils.load_icon_surface import load_icon_texture
+from ulauncher.utils.load_icon_surface import load_icon_paintable
 from ulauncher.utils.Settings import get_settings
 from ulauncher.utils.text_highlighter import highlight_text
 from ulauncher.utils.wm import get_text_scaling_factor
@@ -31,7 +31,7 @@ class ResultWidget(Gtk.Box):
         self.result = result
         self.query = query
         text_scaling_factor = get_text_scaling_factor()
-        icon_size = 25 if result.compact else 40
+        icon_size = int((25 if result.compact else 40) * text_scaling_factor)
         inner_margin_x = int(12.0 * text_scaling_factor)
         outer_margin_x = int(18.0 * text_scaling_factor)
         margin_y = (3 if result.compact else 5) * text_scaling_factor
@@ -57,8 +57,11 @@ class ResultWidget(Gtk.Box):
         self.item_box.append(item_container)
 
         icon = Gtk.Image()
-        icon.set_from_paintable(load_icon_texture(result.icon or "gtk-missing-image", icon_size, self.get_scale_factor()))
-        icon.add_css_class("item-icon")
+        icon.set_from_paintable(load_icon_paintable(result.icon or "application-x-executable", self.get_scale_factor()))
+        if result.compact:
+            icon.add_css_class("item-icon-compact")
+        else:
+            icon.add_css_class("item-icon")
         item_container.append(icon)
 
         self.text_container = Gtk.Box(
