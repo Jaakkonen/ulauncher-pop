@@ -142,7 +142,7 @@ dev = [
 ]
 
 [tool.pdm.scripts]
-start = {call="ulauncher.main:main", env={ ULAUNCHER_SYSTEM_DATA_DIR="./data", ULAUNCHER_APP_ID="io.ulauncher.Ulauncher.dev" }}
+start = {call="ulauncher.main:main", env={ ULAUNCHER_SYSTEM_DATA_DIR="./data/share/ulauncher", ULAUNCHER_APP_ID="io.ulauncher.Ulauncher.dev" }}
 dead-code = "vulture"
 
 [tool.pdm.build]
