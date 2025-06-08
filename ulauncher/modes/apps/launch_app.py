@@ -1,45 +1,57 @@
 import logging
-import re
-import shlex
-from pathlib import Path
 
-from gi.repository import Gio
-
-from ulauncher.utils.launch_detached import launch_detached
-from ulauncher.utils.Settings import get_settings
+from gi.repository import Gdk, Gio
 
 logger = logging.getLogger()
 
 
-def launch_app(desktop_entry_name):
-    app_id = Path(desktop_entry_name).stem if desktop_entry_name.endswith(".desktop") else desktop_entry_name
-    settings = get_settings()
-    app = Gio.DesktopAppInfo.new(desktop_entry_name)
-    assert app
-    app_exec = app.get_commandline()
-    assert app_exec
-    # strip field codes %f, %F, %u, %U, etc
-    app_exec = re.sub(r"\%[uUfFdDnNickvm]", "", app_exec).strip()
-    prefer_raise = settings.raise_if_started or app.get_boolean("SingleMainWindow")
-    if prefer_raise and app_exec:
-        return
+def launch_app(desktop_entry_name: str, uris=None):
+    """
+    Launch an application using its desktop entry name.
 
-    if app.get_boolean("DBusActivatable"):
-        # https://wiki.gnome.org/HowDoI/DBusApplicationLaunching
-        cmd = ["gapplication", "launch", app_id]
-    elif app_exec:
-        if app.get_boolean("Terminal"):
-            terminal_exec = settings.terminal_command
-            if terminal_exec:
-                logger.info("Will run command in preferred terminal (%s)", terminal_exec)
-                cmd = [*shlex.split(terminal_exec), app_exec]
-            else:
-                cmd = ["gtk-launch", app_id]
+    Args:
+        desktop_entry_name: The desktop file name (with or without .desktop suffix)
+        uris: Optional list of URIs to pass as arguments to the application
+
+    Returns:
+        bool: True if launch was successful, False otherwise
+    """
+    try:
+        # Handle desktop file name - add .desktop suffix if not present
+        if desktop_entry_name.endswith(".desktop"):
+            desktop_file_name = desktop_entry_name
         else:
-            cmd = shlex.split(app_exec)
+            desktop_file_name = f"{desktop_entry_name}.desktop"
 
-    if not cmd:
-        logger.error("No command to run %s", app_id)
-    else:
-        logger.info("Run application %s (%s) Exec %s", app.get_name(), app_id, cmd)
-        launch_detached(cmd)
+        # Create DesktopAppInfo from the desktop file
+        app_info = Gio.DesktopAppInfo.new(desktop_file_name)
+
+        if not app_info:
+            logger.error(f"No such application: {desktop_entry_name}")
+            return False
+
+        # Prepare URI list if provided
+        file_list = None
+        if uris:
+            file_list = []
+            for uri in uris:
+                file_obj = Gio.File.new_for_commandline_arg(uri)
+                file_list.append(file_obj)
+
+        # Get the default display and create launch context
+        display = Gdk.Display.get_default()
+        launch_context = display.get_app_launch_context() if display else Gio.AppLaunchContext()
+
+        # Launch the application
+        success = app_info.launch(file_list, launch_context)
+
+        if not success:
+            logger.error(f"Failed to launch application: {desktop_entry_name}")
+            return False
+
+        logger.info(f"Successfully launched application: {desktop_entry_name}")
+        return True
+
+    except Exception as e:
+        logger.error(f"Error launching application {desktop_entry_name}: {e}")
+        return False

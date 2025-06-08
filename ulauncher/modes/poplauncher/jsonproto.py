@@ -89,9 +89,7 @@ _OVERRIDE_MSG_SUBCLASSES = False
 
 class MsgMeta(type):
     def __new__(cls, name, bases, ns, **kwds):
-        # print(name)
         subcls = super().__new__(cls, name, bases, ns, **kwds)
-        # print(subcls)
         # If the only base is "Msg" make it a dataclass
         if _OVERRIDE_MSG_SUBCLASSES:
             if Msg.obj in bases:

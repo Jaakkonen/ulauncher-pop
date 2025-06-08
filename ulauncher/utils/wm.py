@@ -18,13 +18,16 @@ def get_monitor(use_mouse_position: bool = False) -> Gdk.Monitor | None:
         try:
             # GTK4: get_pointer() was removed, use seat API instead
             seat = display.get_default_seat()
+            if seat is None:
+                return None
             device = seat.get_pointer()
-            if device:
-                # GTK4: get_position() method signature changed
-                surface = display.get_default_seat().get_pointer().get_surface_at_position()
-                if surface and hasattr(surface, "get_position"):
-                    x, y = surface.get_position()
-                    return display.get_monitor_at_point(x, y)
+            if device is None:
+                return None
+            # GTK4: get_position() method signature changed
+            surface, x, y = device.get_surface_at_position()
+            if surface and hasattr(surface, "get_position"):
+                x, y = surface.get_position()
+                return display.get_monitor_at_point(x, y)
         except Exception:
             logger.exception("Could not get monitor with pointer position. Defaulting to first monitor")
 
