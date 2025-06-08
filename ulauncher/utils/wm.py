@@ -1,7 +1,8 @@
 from __future__ import annotations
-import logging
-from gi.repository import Gdk, Gio  # type: ignore[attr-defined]
 
+import logging
+
+from gi.repository import Gdk, Gio  # type: ignore[attr-defined]
 
 logger = logging.getLogger()
 
@@ -21,7 +22,7 @@ def get_monitor(use_mouse_position: bool = False) -> Gdk.Monitor | None:
             if device:
                 # GTK4: get_position() method signature changed
                 surface = display.get_default_seat().get_pointer().get_surface_at_position()
-                if surface and hasattr(surface, 'get_position'):
+                if surface and hasattr(surface, "get_position"):
                     x, y = surface.get_position()
                     return display.get_monitor_at_point(x, y)
         except Exception:

@@ -1,8 +1,9 @@
-from typing import Callable
 import json
+from collections.abc import Callable
+
+from gi.repository import Gio, GLib
 
 from ulauncher.modes.poplauncher.poplauncher_ipc import PopRequest, PopResponse, TPopRequest, TPopResponse
-from gi.repository import Gio, GLib
 
 
 class PopLauncherGLibImpl:

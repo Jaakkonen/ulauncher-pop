@@ -7,11 +7,10 @@ TODO:
 """
 
 import json
+from dataclasses import asdict, dataclass, is_dataclass
 from typing import (
-    Any,
     dataclass_transform,
 )
-from dataclasses import asdict, dataclass, is_dataclass
 
 
 class JsonProtocol:

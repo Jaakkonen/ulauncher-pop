@@ -5,10 +5,10 @@ from typing import Any
 
 from gi.repository import Gdk, Gtk
 
-from ulauncher.modes.poplauncher.result import Result
 from ulauncher.modes.apps.launch_app import launch_app
 from ulauncher.modes.PopLauncher import PopLauncherProvider
 from ulauncher.modes.poplauncher.poplauncher_ipc import PopResponse, TPopResponse
+from ulauncher.modes.poplauncher.result import Result
 from ulauncher.ui.ItemNavigation import ItemNavigation
 from ulauncher.ui.ResultWidget import ResultWidget
 from ulauncher.utils.Settings import get_settings
@@ -49,7 +49,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
                 raise NotImplementedError("Context options are not implemented")
             case PopResponse.DesktopEntry(path, gpu_preference, action_name):
                 # Launch the .desktop file
-                launch_app(path.rsplit('/',1)[1])
+                launch_app(path.rsplit("/",1)[1])
             case PopResponse.Update(l):
                 def make_on_enter(id):
                     def on_enter(query):
@@ -58,10 +58,10 @@ class UlauncherWindow(Gtk.ApplicationWindow):
                     return on_enter
                 res = [
                     Result(
-                        name=r['name'],
-                        description=r['description'],
-                        icon=r.get('icon', {}).get('Name', ''),
-                        on_enter=make_on_enter(r['id'])
+                        name=r["name"],
+                        description=r["description"],
+                        icon=r.get("icon", {}).get("Name", ""),
+                        on_enter=make_on_enter(r["id"])
                     )
                     for r in l
                 ]
@@ -256,7 +256,7 @@ class UlauncherWindow(Gtk.ApplicationWindow):
             self.is_dragging = True
             # GTK4 window dragging
             surface = self.get_surface()
-            if surface and hasattr(surface, 'begin_move_drag'):
+            if surface and hasattr(surface, "begin_move_drag"):
                 # Get the device from the gesture
                 device = gesture.get_device()
                 if device:

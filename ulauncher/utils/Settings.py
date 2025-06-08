@@ -1,4 +1,5 @@
 from dataclasses import dataclass, fields
+
 from ulauncher.config import PATHS
 from ulauncher.utils.json_utils import json_load, json_save
 

@@ -6,8 +6,6 @@ from os.path import expanduser, isfile
 
 from gi.repository import Gdk, Gio, Gtk
 
-from ulauncher.config import PATHS
-
 logger = logging.getLogger()
 
 DEFAULT_EXE_ICON = "application-x-executable"

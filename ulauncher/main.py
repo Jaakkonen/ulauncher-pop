@@ -10,6 +10,7 @@ from ulauncher.config import API_VERSION, PATHS, VERSION, get_options
 from ulauncher.ui.UlauncherApp import UlauncherApp
 from ulauncher.utils.environment import DESKTOP_NAME, DISTRO, IS_X11_COMPATIBLE, XDG_SESSION_TYPE
 from ulauncher.utils.logging_color_formatter import ColoredFormatter
+
 # from ulauncher.ui import LayerShell
 
 

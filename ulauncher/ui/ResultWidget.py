@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from html import unescape
 
-from gi.repository import Gdk, Gtk, Pango
+from gi.repository import Gtk, Pango
 
 from ulauncher.modes.poplauncher.result import Result
 from ulauncher.utils.load_icon_surface import load_icon_paintable

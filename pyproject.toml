@@ -125,25 +125,11 @@ log_cli = true
 # -> Allows importing Ulauncher as a module in the same Python environment without "src." prefix
 distribution = true
 
-[tool.pdm.dev-dependencies]
-dev = [
-    "setuptools",
-    "pygobject-stubs",
-    "black",
-    "mypy",
-    "pytest",
-  "pytest-asyncio",
-    "pytest-mock",
-    "PyGObject-stubs",
-    "ruff",
-    "typos",
-    "build",
-    "vulture",
-]
-
 [tool.pdm.scripts]
 start = {call="ulauncher.main:main", env={ ULAUNCHER_SYSTEM_DATA_DIR="./data/share/ulauncher", ULAUNCHER_APP_ID="io.ulauncher.Ulauncher.dev" }}
 dead-code = "vulture"
+# Install PyGObject stubs with GTK4/GDK4 configuration using PDM's native --config-setting support
+install-stubs = {cmd = ["pdm", "add", "--dev", "--config-setting=config=Gtk4,Gdk4", "pygobject-stubs"]}
 
 [tool.pdm.build]
 source-includes = ["data/"]
@@ -162,6 +148,11 @@ build-backend = "pdm.backend"
 # gi.repository is a dynamically populated namespace where only stubs are available
 # TODO: Add a proxy module to allow importing gi.repository which checks the runtime availability of the modules.
 reportMissingModuleSource = "information"
+# Improve gi.repository type checking
+stubPath = ".venv/lib/python3.13/site-packages"
+typeCheckingMode = "standard"
+# Allow gi.repository imports to be resolved
+reportAttributeAccessIssue = "information"
 
 [tool.vulture]
 min_confidence = 60
@@ -171,4 +162,19 @@ ignore_decorators = ["@property", "@staticmethod", "@classmethod"]
 ignore_names = [
     # Keep main entry point
     "main"
+]
+
+[dependency-groups]
+dev = [
+    "setuptools",
+    "black",
+    "mypy",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-mock",
+    "ruff",
+    "typos",
+    "build",
+    "vulture",
+    "pygobject-stubs>=2.13.0",
 ]
