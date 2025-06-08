@@ -8,6 +8,7 @@ DEFAULT_ACTION = True  #  keep window open and do nothing
 @dataclass
 class Result:
     on_enter: Any
+    # Controls whether the title will be highligthed based on the query.
     searchable: bool = False
     compact: bool = False
     highlightable: bool = False
