@@ -21,7 +21,7 @@ class PopLauncherGLibImpl:
   def __init__(self, response_callback: Callable[[TPopResponse], None]):
     self.handler = response_callback
     self.cancellable = Gio.Cancellable()
-    flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDIN_PIPE | Gio.SubprocessFlags.STDERR_MERGE
+    flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDIN_PIPE
     self.process = Gio.Subprocess.new(
       ["/usr/bin/pop-launcher"],
       flags
