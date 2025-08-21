@@ -46,35 +46,29 @@
             pango
             gdk-pixbuf
             libappindicator-gtk3
-          ];
-
-          propagatedBuildInputs = with pkgs; [
             pop-launcher
           ];
 
-          dependencies = with pythonPackages; [
+          propagatedBuildInputs = with pythonPackages; [
             pygobject3
             pycairo
-            # Note: python-xlib is listed in pyproject.toml but not actually used in the code
-            # xlib
           ];
+          pythonImportsCheck = [ "ulauncher" ];
 
-          # Ensure pop-launcher is available in PATH and set system prefix
+          strictDeps = false; # broken with gobject-introspection setup hook https://github.com/NixOS/nixpkgs/issues/56943
+          dontWrapGApps = true; # prevent double wrapping
+          
           preFixup = ''
-            gappsWrapperArgs+=(
-              --prefix PATH : ${pkgs.pop-launcher}/bin
-              --set ULAUNCHER_SYSTEM_PREFIX "$out"
-            )
+            makeWrapperArgs+=(--set ULAUNCHER_SYSTEM_PREFIX "$out")
+            makeWrapperArgs+=(--prefix PATH : "${pkgs.pop-launcher}/bin")
+            makeWrapperArgs+=(--prefix GI_TYPELIB_PATH : "$GI_TYPELIB_PATH")
+            # Preserve GTK_PATH and GTK_THEME from environment
+            makeWrapperArgs+=(--suffix GTK_PATH : "")
+            makeWrapperArgs+=("''${gappsWrapperArgs[@]}")
           '';
-
-          # Also set up the wrapper manually to ensure pop-launcher is found
-          postFixup = ''
-            wrapProgram $out/bin/ulauncher \
-              --prefix PATH : ${pkgs.pop-launcher}/bin
-          '';
-
-          # PDM handles most data file installation via pyproject.toml
           postInstall = ''
+            patchShebangs bin/ulauncher-toggle
+
             # Install application icon (required for proper icon display)
             install -Dm644 data/share/ulauncher/icons/system/apps/ulauncher.svg $out/share/icons/hicolor/scalable/apps/ulauncher.svg
             # Install status icons (required for system tray)

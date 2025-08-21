@@ -31,4 +31,4 @@ data/preferences
 /nix/result
 /nix/dev
 .claude
-result/
+result
