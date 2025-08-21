@@ -23,7 +23,7 @@ class PopLauncherGLibImpl:
     self.cancellable = Gio.Cancellable()
     flags = Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDIN_PIPE
     self.process = Gio.Subprocess.new(
-      ["/usr/bin/pop-launcher"],
+      ["pop-launcher"],
       flags
     )
     self.process.wait_check_async(

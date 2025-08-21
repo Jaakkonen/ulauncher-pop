@@ -1,7 +1,7 @@
 from dataclasses import dataclass, fields
 
 from ulauncher.config import PATHS
-from ulauncher.utils.json_utils import json_load, json_save
+from ulauncher.utils.json_utils import json_load
 
 _settings_file = f"{PATHS.CONFIG}/settings.json"
 
@@ -28,15 +28,6 @@ class Settings:
         # convert to list and filter out duplicates
         return list(dict.fromkeys(list(self.jump_keys)))
 
-    def save(self):
-        """Save current settings to JSON file"""
-        # Convert to dict, handling dash/underscore conversion for compatibility
-        data = {}
-        for key, value in self.__dict__.items():
-            # Convert underscores back to dashes for JSON storage
-            json_key = key.replace("_", "-")
-            data[json_key] = value
-        json_save(data, _settings_file)
 
     @classmethod
     def load_from_file(cls):

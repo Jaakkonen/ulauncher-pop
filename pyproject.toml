@@ -2,42 +2,32 @@
 name = "ulauncher"
 description = "Application launcher for Linux"
 readme = "README.md"
-requires-python = ">=3.11"
-license = {text = "GPL-3"}
+requires-python = ">=3.13"
+license = { text = "GPL-3" }
 authors = [
-  {name = "Aleksandr Gornostal"},
-  {name = "Albin Larsson"},
-  {name = "Troy Curtis"},
-  {name = "Jaakko Sirén" }
+  { name = "Aleksandr Gornostal" },
+  { name = "Albin Larsson" },
+  { name = "Troy Curtis" },
+  { name = "Jaakko Sirén" },
 ]
 urls.Homepage = "http://ulauncher.io/"
 urls.Documentation = "https://docs.ulauncher.io/"
 urls.Repository = "https://github.com/Ulauncher/Ulauncher.git"
 urls.Issues = "https://github.com/Ulauncher/Ulauncher/issues"
-keywords = [ "linux", "desktop", "application", "launcher", "gtk" ]
-dependencies = [ "PyGObject", "pycairo", "python-xlib" ]
+keywords = ["linux", "desktop", "application", "launcher", "gtk"]
+dependencies = ["PyGObject", "pycairo"]
 dynamic = ["version"]
 
 [project.scripts]
 ulauncher = "ulauncher.main:main"
 
-[tool.setuptools.dynamic]
-version = {attr = "ulauncher.version"}
+[tool.pdm.version]
+source = "file"
+path = "ulauncher/__init__.py"
 
 [tool.black]
 line-length = 120
 
-# [tool.mypy]
-# python_version = "3.7"
-# check_untyped_defs = true
-# disallow_incomplete_defs = true
-# disable_error_code = "import-untyped"
-
-[tool.pylint.MASTER]
-ignore-patterns="ulauncher,docs,data,scripts,tests"
-
-[tool.pylint."MESSAGES CONTROL"]
-disable="all"
 
 [tool.typos.default]
 extend-ignore-re = [
@@ -52,60 +42,59 @@ extend-exclude = ["preferences-src/static"]
 line-length = 120
 target-version = "py311"
 lint.ignore = [
-  "A003",     # Allow using same names as python internals for class methods that doesn't shadow global scope
-  "RUF012",   # Mostly false positives because we're deep cloning class vars when creating instances in our custom data class
-  "TCH001", "TCH002", "TCH003" # Performance best practice that does nothing for our use
+  "A003",   # Allow using same names as python internals for class methods that doesn't shadow global scope
+  "RUF012", # Mostly false positives because we're deep cloning class vars when creating instances in our custom data class
+  "TCH001",
+  "TCH002",
+  "TCH003", # Performance best practice that does nothing for our use
 ]
 lint.select = [
-  "A",        # flake8-builtins
-  "ARG",      # flake8-unused-arguments
-  "B",        # flake8-bugbear
-  "C4",       # flake8-comprehensions
+  "A",   # flake8-builtins
+  "ARG", # flake8-unused-arguments
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
   # "DTZ",    # flake8-datetimez (too focused on enforcing time zone argument, which we don't need)
-  "E",        # pycodestyle errors
-  "EM",       # flake8-errmsg
-  "ERA",      # eradicate (commented-out-code)
-  "EXE",      # flake8-executable
-  "FA",       # flake8-future-annotations
-  "FLY",      # flynt
-  "F",        # pyflakes
-  "G",        # flake8-logging-format
-  "I",        # isort
-  "ICN",      # flake8-import-conventions
-  "INP",      # flake8-no-pep420 (ban implicit namespace packages without __init__.py)
-  "INT",      # flake8-gettext
-  "ISC",      # flake8-implicit-str-concat
-  "PGH",      # pygrep-hooks
-  "PIE",      # flake8-pie
-  "PL",       # pylint (same as PLC+PLE+PLR+PLW)
-  "PT",       # flake8-pytest-style
+  "E",   # pycodestyle errors
+  "EM",  # flake8-errmsg
+  "ERA", # eradicate (commented-out-code)
+  "EXE", # flake8-executable
+  "FA",  # flake8-future-annotations
+  "FLY", # flynt
+  "F",   # pyflakes
+  "G",   # flake8-logging-format
+  "I",   # isort
+  "ICN", # flake8-import-conventions
+  "INP", # flake8-no-pep420 (ban implicit namespace packages without __init__.py)
+  "INT", # flake8-gettext
+  "ISC", # flake8-implicit-str-concat
+  "PGH", # pygrep-hooks
+  "PIE", # flake8-pie
+  "PL",  # pylint (same as PLC+PLE+PLR+PLW)
+  "PT",  # flake8-pytest-style
   # "PTH",    # flake8-use-pathlib (pathlib isn't always better imo)
-  "PYI",      # flake8-pyi
-  "RET",      # flake8-return
-  "RSE",      # flake8-raise
-  "RUF",      # Ruff-specific rules
-  "SLF",      # flake8-self
-  "SIM",      # flake8-simplify
-  "T10",      # flake8-debugger
-  "T20",      # flake8-print
-  "TCH",      # flake8-type-checking
-  "TD",       # flake8-todos
-  "TID",      # flake8-tidy-imports
-  "TRY",      # tryceratops
-  "UP",       # pyupgrade
-  "W",        # pycodestyle warnings
-  "Q",        # flake8-quotes
-]
-extend-select = [
-  "I",       # isort
+  "PYI", # flake8-pyi
+  "RET", # flake8-return
+  "RSE", # flake8-raise
+  "RUF", # Ruff-specific rules
+  "SLF", # flake8-self
+  "SIM", # flake8-simplify
+  "T10", # flake8-debugger
+  "T20", # flake8-print
+  "TCH", # flake8-type-checking
+  "TD",  # flake8-todos
+  "TID", # flake8-tidy-imports
+  "TRY", # tryceratops
+  "UP",  # pyupgrade
+  "W",   # pycodestyle warnings
+  "Q",   # flake8-quotes
 ]
 
 # Relax some linting rules for tests
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
-  "PLR2004",  # Allow direct comparison with integers (magic-value)
-  "SLF001",   # Allow accessing private members (obj._hello)
-  "T201"      # Allow print statements
+  "PLR2004", # Allow direct comparison with integers (magic-value)
+  "SLF001",  # Allow accessing private members (obj._hello)
+  "T201",    # Allow print statements
 ]
 
 [tool.ruff.lint.pylint]
@@ -126,18 +115,32 @@ log_cli = true
 distribution = true
 
 [tool.pdm.scripts]
-start = {call="ulauncher.main:main", env={ ULAUNCHER_SYSTEM_DATA_DIR="./data/share/ulauncher", ULAUNCHER_APP_ID="io.ulauncher.Ulauncher.dev" }}
+start = { call = "ulauncher.main:main", env = { ULAUNCHER_SYSTEM_DATA_DIR = "./data/share/ulauncher", ULAUNCHER_APP_ID = "io.ulauncher.Ulauncher.dev" } }
 dead-code = "vulture"
 # Install PyGObject stubs with GTK4/GDK4 configuration using PDM's native --config-setting support
-install-stubs = {cmd = ["pdm", "add", "--dev", "--config-setting=config=Gtk4,Gdk4", "pygobject-stubs"]}
+install-stubs = { cmd = [
+  "pdm",
+  "add",
+  "--dev",
+  "--config-setting=config=Gtk4,Gdk4",
+  "pygobject-stubs",
+] }
 
 [tool.pdm.build]
-source-includes = ["data/"]
+source-includes = ["data/", "bin/", "io.ulauncher.Ulauncher.desktop", "io.ulauncher.Ulauncher.service", "ulauncher.service", "LICENSE"]
 
 [tool.pdm.build.wheel-data]
 # Install data files to share/ulauncher (matching what paths.py expects)
 data = [
-    {path = "data/share/**/*", relative-to = "data/"}
+  { path = "data/share/**/*", relative-to = "data/" },
+  { path = "io.ulauncher.Ulauncher.desktop", target = "share/applications/" },
+  { path = "io.ulauncher.Ulauncher.service", target = "share/dbus-1/services/" },
+  { path = "ulauncher.service", target = "lib/systemd/user/" },
+  { path = "LICENSE", target = "share/licenses/ulauncher/" },
+  { path = "data/icons/system/**/*", target = "share/icons/hicolor/scalable/", relative-to = "data/icons/system/" }
+]
+scripts = [
+  { path = "bin/ulauncher-toggle", target = "bin/" }
 ]
 
 [build-system]
@@ -160,21 +163,20 @@ sort_by_size = true
 paths = ["ulauncher/"]
 ignore_decorators = ["@property", "@staticmethod", "@classmethod"]
 ignore_names = [
-    # Keep main entry point
-    "main"
+  # Keep main entry point
+  "main",
 ]
 
 [dependency-groups]
 dev = [
-    "setuptools",
-    "black",
-    "mypy",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-mock",
-    "ruff",
-    "typos",
-    "build",
-    "vulture",
-    "pygobject-stubs>=2.13.0",
+  "black==24.2.0",
+  "mypy==1.8.0",
+  "pytest==8.0.2",
+  "pytest-asyncio==0.23.5",
+  "pytest-mock==3.12.0",
+  "ruff==0.2.2",
+  "typos",
+  "build",
+  "vulture",
+  "pygobject-stubs>=2.13.0",
 ]

@@ -9,7 +9,7 @@ DEFAULT_ACTION = True  #  keep window open and do nothing
 class Result:
     on_enter: Any
     # Controls whether the title will be highligthed based on the query.
-    searchable: bool = False
+    searchable: bool = True
     compact: bool = False
     highlightable: bool = False
     name: str = ""
@@ -33,9 +33,3 @@ class Result:
 
     def get_description(self, _query: str) -> str:
         return self.description
-
-
-@dataclass
-class ResultContext:
-    id: int
-    name: str
